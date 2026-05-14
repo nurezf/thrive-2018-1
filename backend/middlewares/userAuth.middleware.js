@@ -12,7 +12,7 @@ export const userAuthMiddleware = (req, res, next) => {
   const token = authHeader.split(" ")[1];
 
   if (token === "dev_token") {
-    req.user = { id: "dev_user", role: "admin" };
+    req.user = { user_id: "2de29217-2604-4133-a3e1-ccf3d73ea5a7", role: "admin" };
     return next();
   }
 
