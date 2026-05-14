@@ -32,9 +32,8 @@ export const createProduct = async (req, res) => {
         price,
         original_price,
         discount_percentage,
-        stock,
+        stock: stock || 0,
         category_id,
-        image_url,
         specifications,
       },
     });
@@ -48,7 +47,9 @@ export const createProduct = async (req, res) => {
 
 export const getAllProducts = async (req, res) => {
   try {
-    const products = await prisma.products.findMany({});
+    const products = await prisma.products.findMany({
+      include: { images: true }
+    });
     res.status(200).json(products);
   } catch (error) {
     res.status(500).json({ error: "Failed to retrieve products" });

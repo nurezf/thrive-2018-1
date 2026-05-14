@@ -1,7 +1,8 @@
 "use client";
 
 import { Bell, LogOut, Settings, User } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,21 +32,19 @@ export function AdminHeader() {
           </Button>
 
           <DropdownMenu>
-            <DropdownMenuTrigger>
-              <Button variant="ghost" className="gap-2">
-                <Avatar className="size-8">
-                  <AvatarImage src="" alt="Admin" />
-                  <AvatarFallback className="bg-primary text-primary-foreground">
-                    <User className="size-4" />
-                  </AvatarFallback>
-                </Avatar>
-                <div className="hidden flex-col items-start text-left sm:flex">
-                  <span className="text-sm font-medium">Admin User</span>
-                  <span className="text-xs text-muted-foreground">
-                    admin@example.com
-                  </span>
-                </div>
-              </Button>
+            <DropdownMenuTrigger className={cn(buttonVariants({ variant: "ghost" }), "gap-2")}>
+              <Avatar className="size-8">
+                <AvatarImage src="" alt="Admin" />
+                <AvatarFallback className="bg-primary text-primary-foreground">
+                  <User className="size-4" />
+                </AvatarFallback>
+              </Avatar>
+              <div className="hidden flex-col items-start text-left sm:flex">
+                <span className="text-sm font-medium">Admin User</span>
+                <span className="text-xs text-muted-foreground">
+                  admin@example.com
+                </span>
+              </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
