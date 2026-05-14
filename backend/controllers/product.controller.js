@@ -12,6 +12,7 @@ export const createProduct = async (req, res) => {
     category_id,
     specifications,
   } = req.body;
+  console.log(req.files);
 
   try {
     // Validate category_id exists if provided
@@ -33,6 +34,7 @@ export const createProduct = async (req, res) => {
         discount_percentage,
         stock,
         category_id,
+        image_url,
         specifications,
       },
     });
@@ -79,6 +81,7 @@ export const updateProduct = async (req, res) => {
     stock,
     category_id,
     specifications,
+    image_url,
   } = req.body;
   try {
     const updatedProduct = await prisma.products.update({
