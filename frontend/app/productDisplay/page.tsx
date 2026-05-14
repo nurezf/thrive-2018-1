@@ -85,19 +85,31 @@ export default function ProductDisplay() {
           <p>Error: {error}</p>
         ) : product ? (
           <>
-            {product.map((product: Product) => (
-              <Card key={product.product_id}>
+            {product.map((p: Product) => (
+              <Card key={p.product_id} className="overflow-hidden flex flex-col">
+                {p.images && p.images.length > 0 && (
+                  <div className="w-full h-48 bg-muted relative">
+                    <img src={p.images[0].url} alt={p.name} className="w-full h-full object-cover" />
+                  </div>
+                )}
                 <CardHeader>
-                  <CardTitle>{product.name}</CardTitle>
-                  <CardDescription>{product.description}</CardDescription>
+                  <CardTitle>{p.name}</CardTitle>
+                  <CardDescription>{p.description}</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <p>price: $ {product.price}</p>
-                  <p>discount: %{product.discount_percentage}</p>
+                <CardContent className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="font-semibold text-lg">${p.price}</p>
+                    {p.original_price && (
+                      <p className="line-through text-muted-foreground text-sm">${p.original_price}</p>
+                    )}
+                  </div>
+                  {p.discount_percentage && (
+                    <p className="text-green-600 font-medium text-sm">{p.discount_percentage}% OFF</p>
+                  )}
                 </CardContent>
                 <CardFooter>
                   <CardAction>
-                    <Button onClick={() => handleAddToCart(product)}>
+                    <Button onClick={() => handleAddToCart(p)} className="w-full">
                       Add to Cart
                     </Button>
                   </CardAction>

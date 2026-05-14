@@ -24,6 +24,7 @@ export type Product = {
   stock: number;
   category_id: string;
   sku: string;
+  images?: { url: string }[];
   created_at: string;
   updated_at: string;
 };
@@ -37,12 +38,14 @@ async function getProducts() {
   try {
     const response = await fetch("http://localhost:8000/api/product");
     const data = await response.json();
+    console.log(data);
     return data;
   } catch (error) {
     console.log(error);
     return [];
   }
 }
+
 
 async function fetchCategories() {
   try {
@@ -68,19 +71,17 @@ export default function ProductsPage() {
     <>
       <div className="flex flex-1 items-center gap-4 px-6">
         <h1 className="text-lg font-semibold">Products</h1>
-        <Button variant="outline" size="sm">
-          <ProductAdd />
-        </Button>
+        <ProductAdd />
       </div>
 
       <Table>
         <TableCaption>A list of recent invoices.</TableCaption>
         <TableHeader>
           <TableRow>
+            <TableHead>Image</TableHead>
             <TableHead>Name</TableHead>
             <TableHead>Description</TableHead>
             <TableHead>Price</TableHead>
-            <TableHead>Original Price</TableHead>
             <TableHead>Discount Percentage</TableHead>
             <TableHead>Stock</TableHead>
             <TableHead>Category</TableHead>
@@ -88,20 +89,28 @@ export default function ProductsPage() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {products.map((product) => (
+          {products.map((product, index) => (
             <TableRow key={product.product_id}>
+              <TableCell>
+                {product.images && product.images.length > 0 ? (
+                  <img
+                    src={product.images[0].url}
+                    alt={product.name}
+                    className="w-10 h-10 object-cover rounded"
+                  />
+                ) : (
+                  <div className="w-10 h-10 bg-muted rounded flex items-center justify-center text-[10px] text-muted-foreground text-center">
+                    No img
+                  </div>
+                )}
+              </TableCell>
               <TableCell className="font-medium">{product.name}</TableCell>
               <TableCell>{product.description}</TableCell>
               <TableCell>{product.price}</TableCell>
-              <TableCell>{product.original_price}</TableCell>
               <TableCell>{product.discount_percentage}</TableCell>
               <TableCell>{product.stock}</TableCell>
               <TableCell>
-                {
-                  categories.filter(
-                    (category) => category.category_id === product.category_id,
-                  )[0].name
-                }
+                {categories.find((c) => c.category_id === product.category_id)?.name || "N/A"}
               </TableCell>
               <TableCell>{product.sku}</TableCell>
             </TableRow>
