@@ -1,0 +1,166 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+  seed     = "node prisma/seed.js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Users_role_enum {
+  salesOfficer
+  manager
+}
+
+enum Payments_method_enum {
+  cash
+  bank_transfer
+}
+
+enum Payments_status_enum {
+  pending
+  completed
+  failed
+}
+
+// ---------- MODELS ----------
+model Users {
+  user_id       String          @id @default(uuid())
+  name          String
+  username      String?         @unique
+  avatar_url    String?
+  email         String          @unique
+  password_hash String?
+  role          Users_role_enum @default(salesOfficer) // Set default to customer
+  phone         String?
+  refresh_token String?
+  created_at    DateTime        @default(now())
+  updated_at    DateTime        @updatedAt
+
+  notifications Notifications[]
+
+  sales Sales[]
+}
+
+model Categories {
+  category_id String   @id @default(uuid())
+  name        String
+  description String?
+  created_at  DateTime @default(now())
+
+  products Products[]
+}
+
+model Products {
+  product_id          String   @id @default(uuid())
+  name                String
+  description         String?
+  price               Decimal
+  original_price      Decimal?
+  discount_percentage Decimal?
+  stock               Int
+  category_id         String?
+  specifications      Json?    @default("{}") // Store specifications as JSON
+  sku                 String   @unique @default(uuid())
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  category Categories? @relation(fields: [category_id], references: [category_id], onDelete: Restrict)
+
+  images                 ProductImages[]
+  salesProductQuantities Sales_product_quantities[]
+}
+
+model ProductImages {
+  image_id   String   @id @default(uuid())
+  product_id String
+  url        String // store image URL (local path or cloud storage link)
+  alt_text   String? // alternative text for accessibility
+  is_primary Boolean  @default(false)
+  created_at DateTime @default(now())
+
+  // Relations
+  product              Products @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
+  cloudinary_public_id String?
+}
+
+model Sales_product_quantities {
+  id         String   @id @default(uuid())
+  product_id String
+  quantity   Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  sales_id   String
+
+  product Products @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
+  sales   Sales    @relation(fields: [sales_id], references: [sales_id])
+}
+
+model Sales {
+  sales_id   String   @id @default(uuid())
+  sale_date  DateTime @default(now())
+  user_id    String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  payment_id String?
+
+  sales_product_quantities Sales_product_quantities[]
+
+  users   Users     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  payment Payments? @relation(fields: [payment_id], references: [payment_id], onDelete: SetNull)
+}
+
+model Payments {
+  payment_id     String               @id @default(uuid())
+  order_id       String
+  payment_date   DateTime             @default(now())
+  amount         Decimal
+  method         Payments_method_enum
+  status         Payments_status_enum
+  transaction_id String?
+  created_at     DateTime             @default(now())
+  sales          Sales[]
+  bankPayments   BankPayments?
+}
+
+model BankPayments {
+  bank_payment_id String    @id @default(uuid())
+  payment_id      String    @unique
+  bank_name       String
+  account_number  String
+  receipt_url     String?
+  verified        Boolean   @default(false)
+  verified_at     DateTime?
+  notes           String?
+
+  payment Payments @relation(fields: [payment_id], references: [payment_id], onDelete: Cascade)
+}
+
+model Notifications {
+  notification_id String   @id @default(uuid())
+  user_id         String
+  message         String
+  is_read         Boolean  @default(false)
+  created_at      DateTime @default(now())
+
+  user Users              @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  logs NotificationLogs[]
+}
+
+model NotificationLogs {
+  log_id          String   @id @default(uuid())
+  notification_id String
+  sent_at         DateTime @default(now())
+  delivered       Boolean  @default(false)
+  failed_reason   String?
+
+  notification Notifications @relation(fields: [notification_id], references: [notification_id], onDelete: Cascade)
+}
