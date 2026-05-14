@@ -6,19 +6,37 @@ const prisma = new PrismaClient();
 
 export const registerUser = async (req, res) => {
   try {
-    const { username, email, password, phone, role } = req.body;
+    const { name, username, email, password, phone, role } = req.body;
+    console.log({ name, username, email, password, phone, role });
 
-    if (!email || !password || !phone || !role) {
+    if (!name || !email || !password || !phone || !role) {
       return res.status(400).json({ error: "All fields are required" });
+    }
+
+    const existingUser = await prisma.users.findUnique({
+      where: { email: email },
+    });
+
+    if (existingUser) {
+      return res.status(400).json({ error: "User already exists" });
+    }
+
+    const existUserUsername = await prisma.users.findUnique({
+      where: { username: username },
+    });
+
+    if (existUserUsername) {
+      return res.status(400).json({ error: "Username already exists" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await prisma.users.create({
       data: {
+        name,
         username,
         email,
-        password: hashedPassword,
+        password_hash: hashedPassword,
         phone,
         role,
       },
