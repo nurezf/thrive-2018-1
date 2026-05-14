@@ -13,21 +13,21 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ error: "All fields are required" });
     }
 
-    const existingUser = await prisma.users.findUnique({
-      where: { email: email },
-    });
+    // const existingUser = await prisma.users.findUnique({
+    //   where: { email: email },
+    // });
 
-    if (existingUser) {
-      return res.status(400).json({ error: "User already exists" });
-    }
+    // if (existingUser) {
+    //   return res.status(400).json({ error: "User already exists" });
+    // }
 
-    const existUserUsername = await prisma.users.findUnique({
-      where: { username: username },
-    });
+    // const existUserUsername = await prisma.users.findUnique({
+    //   where: { username: username },
+    // });
 
-    if (existUserUsername) {
-      return res.status(400).json({ error: "Username already exists" });
-    }
+    // if (existUserUsername) {
+    //   return res.status(400).json({ error: "Username already exists" });
+    // }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -45,7 +45,7 @@ export const registerUser = async (req, res) => {
     const accessToken = jwt.sign(
       { user_id: user.user_id },
       process.env.JWT_ACCESS_SECRET,
-      { expiresIn: "15m" },
+      { expiresIn: "1d" },
     );
 
     const refreshToken = jwt.sign(
