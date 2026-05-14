@@ -67,3 +67,53 @@ export const registerUser = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+export const login = async (req, res) => {
+  const { identifier, password } = req.body;
+  try {
+    const user = await prisma.users.findUnique({
+      where: { OR: [{ email: identifier }, { username: identifier }] },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+
+    if (!isPasswordValid) {
+      return res.status(401).json({ error: "Invalid password" });
+    }
+
+    const accessToken = jwt.sign(
+      { user_id: user.user_id },
+      process.env.JWT_ACCESS_SECRET,
+      { expiresIn: "15m" },
+    );
+
+    const refreshToken = jwt.sign(
+      { user_id: user.user_id },
+      process.env.JWT_REFRESH_SECRET,
+      { expiresIn: "7d" },
+    );
+
+    user.refresh_token = refreshToken;
+
+    await prisma.users.update({
+      where: { user_id: user.user_id },
+      data: { refresh_token: refreshToken },
+    });
+
+    res.status(200).json({ user, accessToken, refreshToken });
+  } catch (error) {}
+};
+
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await prisma.users.findMany();
+    res.status(200).json(users);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
