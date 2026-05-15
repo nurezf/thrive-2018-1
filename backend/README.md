@@ -1,229 +1,121 @@
-
-# Nihal-Electronic-e-commerce-project
+# Thrive Project
 
 ## User Authentication
-- **Register**:  
-  `POST http://localhost:8000/api/users/register`
 
-- **get all user admin only**:  
-  `GET http://localhost:8000/api/users`
--**get user with role delivery(admin)**
-  `GET http://localhost:8000/api/users/delivery`  
+- Register:  
+  POST http://localhost:8000/api/users/register
 
-- **Sign In**:  
-  `POST http://localhost:8000/api/users/signin`
+- Sign In:  
+  POST http://localhost:8000/api/users/login
 
-- **refresh token**
-  `POST /api/users/refresh (Validate refresh token)`
-
-- **logout**
- ` POST /api/users/logout `
-
- - **update profile**
- ` PUT /api/users/profile `
-
- - **change password**
- ` PUT /api/users/password `
-
-## Social Authentication
-- **Google Login**:  
-  `GET http://localhost:8000/api/auth/google`
-
-- **Facebook Login**:  
-  `GET http://localhost:8000/api/auth/facebook`
-
-- **get decoded token**
-  `http://localhost:8000/api/users/decode/:token`
+- Get All Users (admin only):  
+  GET http://localhost:8000/api/users
 
 ---
 
 ## Categories
-- **Create Category**:  
-  `POST http://localhost:8000/api/categories`
 
-- **Get All Categories**:  
-  `GET http://localhost:8000/api/categories`
+- Create Category:  
+  POST http://localhost:8000/api/categories/create
 
-- **Get Single Category**:  
-  `GET http://localhost:8000/api/categories/:category_id`
+- Get All Categories:  
+  GET http://localhost:8000/api/categories
 
-- **Update Category**:  
-  `PUT http://localhost:8000/api/categories/:category_id`
+- Update Category:  
+  PUT http://localhost:8000/api/categories/update/:category_id
 
-- **Delete Category**:  
-  `DELETE http://localhost:8000/api/categories/:category_id`
+- Delete Category:  
+  DELETE http://localhost:8000/api/categories/delete/:category_id
 
 ---
 
 ## Products
-- **Create Product**:  
-  `POST http://localhost:8000/api/products`
 
-- **Get All Products**:  
-  `GET http://localhost:8000/api/products`
+- Create Product:  
+  POST http://localhost:8000/api/product
 
-- **Get Single Product**:  
-  `GET http://localhost:8000/api/products/:product_id`
+- Get All Products:  
+  GET http://localhost:8000/api/product
 
-- **Update Product**:  
-  `PUT http://localhost:8000/api/products/:product_id`
+- Get Single Product:  
+  GET http://localhost:8000/api/product/:id
 
-- **Delete Product**:  
-  `DELETE http://localhost:8000/api/products/:product_id`
-
-- **Get related Products**:  
-  `http://localhost:8000/api/products/:product_id/related`
 ---
-
 
 ## Product Images
-- **Add Product Image**:  
-  `POST http://localhost:8000/api/products/:product_id/images`
 
-- **Get All Images for Product**:  
-  `GET http://localhost:8000/api/products/:product_id/images`
+- Add Product Image:  
+  POST http://localhost:8000/api/product/:product_id/images
 
-- **Get Single Image**:  
-  `GET http://localhost:8000/api/products/:product_id/images/:image_id`
+- Get All Images for Product:  
+  GET http://localhost:8000/api/product/:product_id/images
 
-- **Update Image**:  
-  `PUT http://localhost:8000/api/products/:product_id/images/:image_id`
+- Get Single Image:  
+  GET http://localhost:8000/api/product/:product_id/images/:image_id
 
-- **Delete Image**:  
-  `DELETE http://localhost:8000/api/products/:product_id/images/:image_id`
+- Update Image:  
+  PUT http://localhost:8000/api/product/:product_id/images/:image_id
 
----
-
-
-
-## Address
-- **Add Address**:  
-  `POST http://localhost:8000/api/addresses`
-
-- **Get Address**:  
-  `GET http://localhost:8000/api/addresses`
-
-- **Update Address**:  
-  `PUT http://localhost:8000/api/addresses/:addressId`
-
-- **Delete Address**:  
-  `DELETE http://localhost:8000/api/addresses/:addressId`
+- Delete Image:  
+  DELETE http://localhost:8000/api/product/:product_id/images/:image_id
 
 ---
 
-## Shipping Method
-- **Add Shipping Methodt**:  
-  `POST http://localhost:8000/api/shipping-methods`
+## Sales
 
-- **Get Shipping Method**:  
-  `GET http://localhost:8000/api/shipping-methods`
+- Create Sale:  
+  POST http://localhost:8000/api/sales/create
 
-- **Update Shipping Method**:  
-  `PUT http://localhost:8000/api/shipping-methods/:shippingMethodId`
+- Approve Sale:  
+  POST http://localhost:8000/api/sales/:sales_id/approve
 
-- **Delete Shipping Method**:  
-  `DELETE http://localhost:8000/api/shipping-methods/:shippingMethodId`
+- Reject Sale:  
+  POST http://localhost:8000/api/sales/:sales_id/reject
 
----
+- Get Sales:  
+  GET http://localhost:8000/api/sales
 
-## Order
-- **Add Order**:  
-  `POST http://localhost:8000/api/orders`
+- Get Sale Product Quantity:  
+  GET http://localhost:8000/api/sales/product
 
-- **Get Orders**:  
-  `GET POST http://localhost:8000/api/orders`
+- Get Sale Product Quantity by Sales ID:  
+  GET http://localhost:8000/api/sales/product/:sales_id
 
-- **Get Single Orders**:  
-  `GET POST http://localhost:8000/api/orders/:orderId`  
+## Environment Variables (.env)
 
-- **Update order status**:  
-  `PUT http://localhost:8000/api/orders/:orderId`
-
-- **get All orders(admin)**
-  `PUT http://localhost:8000/api/orders/amdin/all`
-
----
-
-## delivery
--**Get delivery for order**
- `GET /api/deliveries/:orderId `
--**Admin assign staff** 
- `PUT /api/deliveries/:orderId/assign` 
--**Update status/track** 
- `PUT /api/deliveries/:deliveryId/track` 
- 
---- 
-
-## reviews or ratings
-- **Add rating**:  
-  `POST http://localhost:8000/api/reviews`
-
-- **Get rating**:  
-  `GET http://localhost:8000/api/reviews/:productId`
-
-
----
-## Loved product
-- **Add and remove**:
- `POST http://localhost:8000/api/loved/toggle`
-- **Get loved products**:
- `GET http://localhost:8000/api/loved`
--**Check loved product**
-`http://localhost:8000/api/loved/check/:productId`
-
----
-
-## payment
-- **create payment**
-`POST http://localhost:8000/api/payments/:orderId`
-`form-data: {
-  "amout": "",
-  "method":"card" || "mobile_money" || "cash" || "bank_transfer",
-  "transaction_id": "",
-  "bank_name": "",
-  "account_number": "",
-  "receipt_screenshot": "file"
-}`
-
--**Get payment for order**
-`http://localhost:8000/api/payments/:orderId`
-
--**Update payment status (admin)**
-`PUT http://localhost:8000/api/payments/:paymentId/status`
-`data: { "status": "completed" || "pending" || "failed" }`
-
--**Verify bank payment (admin)**
-`PUT http://localhost:8000/api/payments/:paymentId/verify-bank`
-`data:{ "verified": true, "notes": "Receipt confirmed" }`
-
--**get payment list(admin)**
-`GET http://localhost:8000/api/payments`
-
-
-## Environment Variables (`.env`)
-```env
-DATABASE_URL="mysql://root:1234@localhost:3306/ElectroShop"
+DATABASE_URL="postgresql://username:password@localhost:5432/database_name"
 PORT=8000
-GOOGLE_CLIENT_ID="645889207349-09hdhs2bc.apps.googleusercontent.com"
-GOOGLE_CLIENT_SECRET="GOCSPX-tFhTs1VPYPrb2b"
-FACEBOOK_CLIENT_ID=your_facebook_app_id
-FACEBOOK_CLIENT_SECRET=your_facebook_app_secret
-JWT_SECRET="/slBa/Ifb2Obf7j1n/+qe7P6bgMxDAwszevFgFsOOJ8lWjDEnBeNSvM3NnZ/UeQhYmAduixRAPF0R+NkAbJDSA=="
+JWT_SECRET="your_jwt_secret"
+CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+CLOUDINARY_API_KEY=your_cloudinary_api_key
+CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 
+## Installation and Setup
 
+### Install Dependencies
 
-To run your Node.js project:
-
-Install dependencies
 Open a terminal in your backend folder and run:
+npm install
 
-Set up environment variables
-Make sure your .env file is present and configured (as shown in your README).
+### Set Up Environment Variables
 
-Run database migrations (if using Prisma):
+Create a .env file in the backend directory and configure it with the variables shown above. Replace the placeholder values with your actual credentials.
 
-Start the server:
+### Run Database Migrations (Prisma)
 
-or, for development with auto-reload:
+npx prisma generate
+npx prisma migrate dev
+
+## Running the Server
+
+### Start the Server
+
+npm start
+
+This will start the server using nodemon for development with auto-reload.
 
 Your server should now be running at http://localhost:8000.
+
+### API Documentation
+
+You can access the Swagger UI for API documentation at http://localhost:8000/api-docs (if configured).

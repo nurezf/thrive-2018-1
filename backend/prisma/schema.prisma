@@ -120,7 +120,6 @@ model Sales {
 
 model Payments {
   payment_id     String               @id @default(uuid())
-  order_id       String
   payment_date   DateTime             @default(now())
   amount         Decimal
   method         Payments_method_enum
