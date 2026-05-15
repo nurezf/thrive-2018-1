@@ -99,7 +99,7 @@ function RegisterPage() {
         if (data.refreshToken)
           localStorage.setItem("refreshToken", data.refreshToken);
         localStorage.setItem("user", JSON.stringify(data.user));
-        router.push("/");
+        router.push("/admin/dashboard");
       } else {
         router.push("/login");
       }

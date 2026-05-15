@@ -207,10 +207,10 @@ export default function ProductsPage() {
             <Download className="mr-2 h-4 w-4" />
             Excel
           </Button>
-          <Button variant="outline" onClick={exportToPDF}>
+          {/* <Button variant="outline" onClick={exportToPDF}>
             <FileText className="mr-2 h-4 w-4" />
             PDF
-          </Button>
+          </Button> */}
           <ProductAdd />
         </div>
       </div>

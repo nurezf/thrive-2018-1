@@ -240,10 +240,10 @@ export default function SalesPage() {
             <Download className="mr-2 h-4 w-4" />
             Export Excel
           </Button>
-          <Button variant="outline" onClick={exportToPDF}>
+          {/* <Button variant="outline" onClick={exportToPDF}>
             <FileText className="mr-2 h-4 w-4" />
             Export PDF
-          </Button>
+          </Button> */}
         </div>
       </div>
 
