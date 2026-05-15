@@ -28,6 +28,8 @@ export default function ProductDisplay() {
     setError,
   } = useProductStore();
 
+  const [searchQuery, setSearchQuery] = useState("");
+
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -52,6 +54,8 @@ export default function ProductDisplay() {
           type="text"
           placeholder="Search..."
           className="border border-border rounded-md p-2"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
         />
         {/* TODO: add category filter */}
         <select name="" id="" className="border border-border rounded-md p-2">
@@ -85,7 +89,14 @@ export default function ProductDisplay() {
           <p>Error: {error}</p>
         ) : product ? (
           <>
-            {product.map((p: Product) => (
+            {product
+              .filter(
+                (p: Product) =>
+                  p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  (p.description &&
+                    p.description.toLowerCase().includes(searchQuery.toLowerCase()))
+              )
+              .map((p: Product) => (
               <Card key={p.product_id} className="overflow-hidden flex flex-col">
                 {p.images && p.images.length > 0 && (
                   <div className="w-full h-48 bg-muted relative">

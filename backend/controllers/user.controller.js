@@ -69,10 +69,10 @@ export const registerUser = async (req, res) => {
 };
 
 export const login = async (req, res) => {
-  const { identifier, password } = req.body;
+  const { username, password } = req.body;
   try {
     const user = await prisma.users.findUnique({
-      where: { OR: [{ email: identifier }, { username: identifier }] },
+      where: { username: username },
     });
 
     if (!user) {

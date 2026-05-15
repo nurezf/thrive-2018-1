@@ -36,17 +36,22 @@ const menuItems = [
   {
     title: "Products",
     icon: BookOpen,
-    href: "/admin/dashboard/products",
+    href: "/admin/products",
   },
   {
     title: "Sales",
     icon: MessageSquare,
-    href: "/admin/dashboard/sales",
+    href: "/admin/sales",
   },
   {
-    title: "analytics",
+    title: "Approvals",
+    icon: Calendar,
+    href: "/admin/approvals",
+  },
+  {
+    title: "Analytics",
     icon: PlaySquare,
-    href: "/admin/dashboard/analytics",
+    href: "/admin/analytics",
   },
 ];
 

@@ -6,14 +6,15 @@ import {
   getSale,
   getSaleProductQuantity,
   getSaleProductQuantityBySalesId,
+  getSaleById,
 } from "../controllers/sales.controller.js";
 import { userAuthMiddleware } from "../middlewares/userAuth.middleware.js";
 
 const router = Router();
 
 router.post("/create", userAuthMiddleware, createSale);
-router.post("/:sales_id/approve", userAuthMiddleware, approveSale);
-router.post("/:sales_id/reject", userAuthMiddleware, rejectSale);
+router.post("/:sales_id/approve", approveSale);
+router.post("/:sales_id/reject", rejectSale);
 router.get("/", userAuthMiddleware, getSale);
 router.get("/product", userAuthMiddleware, getSaleProductQuantity);
 router.get(
@@ -21,5 +22,6 @@ router.get(
   userAuthMiddleware,
   getSaleProductQuantityBySalesId,
 );
+router.get("/:sales_id", userAuthMiddleware, getSaleById);
 
 export default router;

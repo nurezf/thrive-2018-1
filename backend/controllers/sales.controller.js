@@ -25,12 +25,10 @@ export const createSale = async (req, res) => {
         typeof item.quantity !== "number" ||
         item.quantity <= 0
       ) {
-        return res
-          .status(400)
-          .json({
-            error:
-              "Each product must include a valid product_id and a positive quantity",
-          });
+        return res.status(400).json({
+          error:
+            "Each product must include a valid product_id and a positive quantity",
+        });
       }
 
       const discountPercentage = item.discount_percentage ?? 0;
@@ -39,11 +37,9 @@ export const createSale = async (req, res) => {
         discountPercentage < 0 ||
         discountPercentage > 100
       ) {
-        return res
-          .status(400)
-          .json({
-            error: "discount_percentage must be a number between 0 and 100",
-          });
+        return res.status(400).json({
+          error: "discount_percentage must be a number between 0 and 100",
+        });
       }
 
       const product = await prisma.products.findUnique({
@@ -55,11 +51,9 @@ export const createSale = async (req, res) => {
           .json({ error: `Product with ID ${item.product_id} not found` });
       }
       if (product.stock < item.quantity) {
-        return res
-          .status(400)
-          .json({
-            error: `Insufficient stock for product ${product.name}. Available: ${product.stock}, Requested: ${item.quantity}`,
-          });
+        return res.status(400).json({
+          error: `Insufficient stock for product ${product.name}. Available: ${product.stock}, Requested: ${item.quantity}`,
+        });
       }
 
       const discountAmount = product.price * (discountPercentage / 100);
@@ -69,6 +63,8 @@ export const createSale = async (req, res) => {
     const calculatedVat = taxableAmount * vat;
     const finalAmount = taxableAmount + calculatedVat;
     const requiresApproval = finalAmount > 50000;
+
+    let sale_ID;
 
     await prisma.$transaction(async (tx) => {
       for (const item of products) {
@@ -104,6 +100,7 @@ export const createSale = async (req, res) => {
           payment_id: payment.payment_id,
         },
       });
+      sale_ID = sale.sales_id;
 
       for (const item of products) {
         await tx.sales_product_quantities.create({
@@ -117,15 +114,18 @@ export const createSale = async (req, res) => {
     });
 
     if (requiresApproval) {
-      return res
-        .status(201)
-        .json({
-          message: "Sale created and pending manager approval",
-          status: 201,
-        });
+      return res.status(201).json({
+        message: "Sale created and pending manager approval",
+        status: 201,
+        sales_id: sale_ID,
+      });
     }
 
-    res.status(201).json({ message: "Sale created successfully", status: 201 });
+    res.status(201).json({
+      message: "Sale created successfully",
+      status: 201,
+      sales_id: sale_ID,
+    });
   } catch (error) {
     console.log(error);
     if (error.message?.startsWith("Insufficient stock")) {
@@ -136,12 +136,8 @@ export const createSale = async (req, res) => {
 };
 
 export const approveSale = async (req, res) => {
+  console.log(req.user, req.params);
   const { sales_id } = req.params;
-  const { role } = req.user;
-
-  if (role !== "manager") {
-    return res.status(403).json({ error: "Manager approval required" });
-  }
 
   try {
     const sale = await prisma.sales.findUnique({
@@ -173,8 +169,15 @@ export const approveSale = async (req, res) => {
 };
 
 export const rejectSale = async (req, res) => {
+  console.log(req.user);
+
   const { sales_id } = req.params;
-  const { role } = req.user;
+  const { user_id } = req.user;
+
+  const user = await prisma.users.findUnique({
+    where: { user_id: user_id },
+  });
+  const role = user.role;
 
   if (role !== "manager") {
     return res.status(403).json({ error: "Manager approval required" });
@@ -237,6 +240,33 @@ export const getSale = async (req, res) => {
     });
 
     res.status(200).json(sales);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Internal server error", status: 500 });
+  }
+};
+
+export const getSaleById = async (req, res) => {
+  const { sales_id } = req.params;
+  try {
+    const sale = await prisma.sales.findUnique({
+      where: { sales_id },
+      include: {
+        payment: true,
+        users: true,
+        sales_product_quantities: {
+          include: {
+            product: true,
+          },
+        },
+      },
+    });
+
+    if (!sale) {
+      return res.status(404).json({ error: "Sale not found" });
+    }
+
+    res.status(200).json(sale);
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Internal server error", status: 500 });

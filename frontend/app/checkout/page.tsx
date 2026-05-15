@@ -31,6 +31,7 @@ export default function CheckoutPage() {
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isPolling, setIsPolling] = useState(false);
 
   async function calculateTotalPrice() {
     const total = cart.reduce((acc, product) => acc + Number(product.price), 0);
@@ -57,19 +58,19 @@ export default function CheckoutPage() {
 
   async function handleCheckout() {
     if (cart.length === 0) return;
-    
+
     setIsCheckingOut(true);
     try {
       // Group quantities
       const productsPayload = cart.reduce((acc: any[], product) => {
-        const existing = acc.find(p => p.product_id === product.product_id);
+        const existing = acc.find((p) => p.product_id === product.product_id);
         if (existing) {
           existing.quantity += 1;
         } else {
           acc.push({
             product_id: product.product_id,
             quantity: 1,
-            discount_percentage: Number(product.discount_percentage || 0)
+            discount_percentage: Number(product.discount_percentage || 0),
           });
         }
         return acc;
@@ -82,17 +83,58 @@ export default function CheckoutPage() {
           payment_method: paymentMethod,
         },
         {
-          headers: { Authorization: "Bearer dev_token" }
-        }
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        },
       );
 
-      alert("Sale created successfully!");
-      useProductStore.setState({ cart: [] });
-      setIsDialogOpen(false);
+      if (response.data?.message?.includes("pending manager approval")) {
+        setIsPolling(true);
+        const salesId = response.data.sales_id;
+        
+        const pollInterval = setInterval(async () => {
+          try {
+            const checkRes = await axios.get(
+              `http://localhost:8000/api/sales/${salesId}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+                },
+              }
+            );
+            const status = checkRes.data.payment?.status;
+            
+            if (status === "completed") {
+              clearInterval(pollInterval);
+              setIsPolling(false);
+              setIsCheckingOut(false);
+              alert("Sale approved and completed successfully!");
+              useProductStore.setState({ cart: [] });
+              setIsDialogOpen(false);
+            } else if (status === "failed") {
+              clearInterval(pollInterval);
+              setIsPolling(false);
+              setIsCheckingOut(false);
+              alert("Sale was rejected by the manager.");
+              setIsDialogOpen(false);
+            }
+          } catch (e) {
+            console.error("Polling error", e);
+          }
+        }, 3000);
+      } else {
+        const successMessage = response.data?.message || "Sale created successfully!";
+        alert(successMessage);
+        useProductStore.setState({ cart: [] });
+        setIsDialogOpen(false);
+        setIsCheckingOut(false);
+      }
     } catch (error: any) {
       console.error("Checkout failed", error);
-      alert("Checkout failed: " + (error.response?.data?.error || error.message));
-    } finally {
+      alert(
+        "Checkout failed: " + (error.response?.data?.error || error.message),
+      );
       setIsCheckingOut(false);
     }
   }
@@ -139,24 +181,41 @@ export default function CheckoutPage() {
               <DialogHeader>
                 <DialogTitle>Complete Checkout</DialogTitle>
                 <DialogDescription>
-                  Choose your payment method to finalize the sale. Total amount: ${totalPrice.toFixed(2)}
+                  Choose your payment method to finalize the sale. Total amount:
+                  ${totalPrice.toFixed(2)}
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
-                <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="cash" id="cash" />
-                    <Label htmlFor="cash">Cash</Label>
+                {isPolling ? (
+                  <div className="flex flex-col items-center justify-center p-4">
+                    <p className="text-lg font-medium text-orange-600">Waiting for manager approval...</p>
+                    <p className="text-sm text-gray-500">Please do not close this window.</p>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="bank" id="bank" />
-                    <Label htmlFor="bank">Bank Transfer</Label>
-                  </div>
-                </RadioGroup>
+                ) : (
+                  <RadioGroup
+                    value={paymentMethod}
+                    onValueChange={setPaymentMethod}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="cash" id="cash" />
+                      <Label htmlFor="cash">Cash</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="bank" id="bank" />
+                      <Label htmlFor="bank">Bank Transfer</Label>
+                    </div>
+                  </RadioGroup>
+                )}
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                <Button onClick={handleCheckout} disabled={isCheckingOut}>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDialogOpen(false)}
+                  disabled={isPolling}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleCheckout} disabled={isCheckingOut || isPolling}>
                   {isCheckingOut ? "Processing..." : "Confirm Payment"}
                 </Button>
               </DialogFooter>

@@ -61,6 +61,7 @@ async function fetchCategories() {
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     getProducts().then((data) => setProducts(data));
@@ -69,9 +70,18 @@ export default function ProductsPage() {
 
   return (
     <>
-      <div className="flex flex-1 items-center gap-4 px-6">
+      <div className="flex flex-1 items-center justify-between px-6 mb-4 mt-4">
         <h1 className="text-lg font-semibold">Products</h1>
-        <ProductAdd />
+        <div className="flex items-center gap-4">
+          <input
+            type="text"
+            placeholder="Search products..."
+            className="border border-border rounded-md p-2"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <ProductAdd />
+        </div>
       </div>
 
       <Table>
@@ -89,7 +99,16 @@ export default function ProductsPage() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {products.map((product, index) => (
+          {products
+            .filter(
+              (product) =>
+                product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (product.description &&
+                  product.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                (product.sku &&
+                  product.sku.toLowerCase().includes(searchQuery.toLowerCase()))
+            )
+            .map((product, index) => (
             <TableRow key={product.product_id}>
               <TableCell>
                 {product.images && product.images.length > 0 ? (
