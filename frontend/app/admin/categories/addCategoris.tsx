@@ -94,7 +94,9 @@ export default function CategoryAdd() {
             </div>
           </div>
 
-          <Button type="submit">Add Category</Button>
+          <Button type="submit" className="bg-black text-white rounded-md p-2">
+            Add Category
+          </Button>
         </form>
       </DialogContent>
     </Dialog>

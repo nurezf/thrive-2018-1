@@ -52,7 +52,6 @@ async function getProducts() {
   }
 }
 
-
 async function fetchCategories() {
   try {
     const response = await fetch("http://localhost:8000/api/categories");
@@ -91,18 +90,22 @@ export default function ProductsPage() {
     (product) =>
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (product.description &&
-        product.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        product.description
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase())) ||
       (product.sku &&
-        product.sku.toLowerCase().includes(searchQuery.toLowerCase()))
+        product.sku.toLowerCase().includes(searchQuery.toLowerCase())),
   );
 
   const exportToExcel = () => {
     const wsData = filteredProducts.map((product) => ({
-      "SKU": product.sku,
-      "Name": product.name,
-      "Category": categories.find((c) => c.category_id === product.category_id)?.name || "N/A",
+      SKU: product.sku,
+      Name: product.name,
+      Category:
+        categories.find((c) => c.category_id === product.category_id)?.name ||
+        "N/A",
       "Price ($)": Number(product.price).toFixed(2),
-      "Stock": product.stock,
+      Stock: product.stock,
     }));
 
     const ws = XLSX.utils.json_to_sheet(wsData);
@@ -123,7 +126,8 @@ export default function ProductsPage() {
     const tableRows = filteredProducts.map((product) => [
       product.sku,
       product.name,
-      categories.find((c) => c.category_id === product.category_id)?.name || "N/A",
+      categories.find((c) => c.category_id === product.category_id)?.name ||
+        "N/A",
       `$${Number(product.price).toFixed(2)}`,
       product.stock,
     ]);
@@ -177,7 +181,6 @@ export default function ProductsPage() {
             <TableHead>Stock</TableHead>
             <TableHead>Category</TableHead>
             <TableHead>SKU</TableHead>
-            <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -202,7 +205,8 @@ export default function ProductsPage() {
               <TableCell>{product.discount_percentage}</TableCell>
               <TableCell>{product.stock}</TableCell>
               <TableCell>
-                {categories.find((c) => c.category_id === product.category_id)?.name || "N/A"}
+                {categories.find((c) => c.category_id === product.category_id)
+                  ?.name || "N/A"}
               </TableCell>
               <TableCell>{product.sku}</TableCell>
               <TableCell className="flex items-center gap-2">

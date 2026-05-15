@@ -10,6 +10,7 @@ import {
   PlaySquare,
   Settings,
   User,
+  Package,
 } from "lucide-react";
 import {
   Sidebar,
@@ -53,6 +54,11 @@ const menuItems = [
     icon: PlaySquare,
     href: "/admin/analytics",
   },
+  {
+    title: "Categories",
+    icon: Package,
+    href: "/admin/categories",
+  },
 ];
 
 const settingsItems = [
@@ -91,13 +97,13 @@ export function AdminSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
-                <SidebarMenuItem key={item.href} className="text-sm my-3 p-4">
+                <SidebarMenuItem key={item.href} className="text-sm my-3 p-4 ">
                   <SidebarMenuButton
                     isActive={pathname === item.href}
                     tooltip={item.title}
                     className="flex items-center gap-2 p-5 rounded-2xl"
                   >
-                    <Link href={item.href}>
+                    <Link href={item.href} className="flex gap-2">
                       <item.icon />
                       <span>{item.title}</span>
                     </Link>

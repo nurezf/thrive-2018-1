@@ -42,7 +42,7 @@ export default function CategoriesPage() {
     <>
       <div className="flex flex-1 items-center gap-4 px-6">
         <h1 className="text-lg font-semibold">Categories</h1>
-        <Button variant="outline" size="sm">
+        <Button className="bg-black text-white rounded-md p-2">
           <CategoryAdd />
         </Button>
       </div>

@@ -22,11 +22,29 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@base-ui/react";
 import axios from "axios";
+import { z } from "zod";
 
 type Category = {
   category_id: string;
   name: string;
 };
+
+const productSchema = z.object({
+  name: z.string().min(3, "Name must be at least 3 characters"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
+  price: z.number().positive("Price must be greater than 0"),
+  originalPrice: z
+    .number()
+    .positive("Original price must be greater than 0")
+    .optional(),
+  discountPercentage: z
+    .number()
+    .positive("Discount percentage must be greater than 0")
+    .optional(),
+  stock: z.number().positive("Stock must be greater than 0"),
+  image: z.instanceof(File, "Image is required"),
+  categoryId: z.string().min(1, "Category is required"),
+});
 
 export default function ProductAdd() {
   const [name, setName] = useState("");
@@ -80,8 +98,13 @@ export default function ProductAdd() {
             },
           );
         } catch (imgError: any) {
-          console.error("Image upload failed:", imgError.response?.data || imgError);
-          alert(`Product created, but image upload failed: ${imgError.response?.data?.details || imgError.message}`);
+          console.error(
+            "Image upload failed:",
+            imgError.response?.data || imgError,
+          );
+          alert(
+            `Product created, but image upload failed: ${imgError.response?.data?.details || imgError.message}`,
+          );
           window.location.reload();
           return;
         }
@@ -90,13 +113,17 @@ export default function ProductAdd() {
       window.location.reload();
     } catch (error: any) {
       console.error("Error creating product:", error.response?.data || error);
-      alert(`Failed to add product: ${error.response?.data?.error || error.message}`);
+      alert(
+        `Failed to add product: ${error.response?.data?.error || error.message}`,
+      );
     }
   };
 
   return (
     <Dialog>
-      <DialogTrigger className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
+      <DialogTrigger
+        className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+      >
         Add Product
       </DialogTrigger>
       <DialogContent>
