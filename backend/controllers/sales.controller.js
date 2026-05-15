@@ -236,6 +236,11 @@ export const getSale = async (req, res) => {
       include: {
         payment: true,
         users: true,
+        sales_product_quantities: {
+          include: {
+            product: true,
+          },
+        },
       },
     });
 

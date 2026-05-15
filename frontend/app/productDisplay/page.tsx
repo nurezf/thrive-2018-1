@@ -47,7 +47,7 @@ export default function ProductDisplay() {
   }, []);
   return (
     <main>
-      <header className="flex items-center justify-between gap-2 mb-2">
+      <header className="flex items-center justify-between gap-2 my-5">
         <h2 className="text-2xl font-semibold">Products</h2>
         {/* TODO: add search bar */}
         <input
@@ -94,39 +94,55 @@ export default function ProductDisplay() {
                 (p: Product) =>
                   p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                   (p.description &&
-                    p.description.toLowerCase().includes(searchQuery.toLowerCase()))
+                    p.description
+                      .toLowerCase()
+                      .includes(searchQuery.toLowerCase())),
               )
               .map((p: Product) => (
-              <Card key={p.product_id} className="overflow-hidden flex flex-col">
-                {p.images && p.images.length > 0 && (
-                  <div className="w-full h-48 bg-muted relative">
-                    <img src={p.images[0].url} alt={p.name} className="w-full h-full object-cover" />
-                  </div>
-                )}
-                <CardHeader>
-                  <CardTitle>{p.name}</CardTitle>
-                  <CardDescription>{p.description}</CardDescription>
-                </CardHeader>
-                <CardContent className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="font-semibold text-lg">${p.price}</p>
-                    {p.original_price && (
-                      <p className="line-through text-muted-foreground text-sm">${p.original_price}</p>
-                    )}
-                  </div>
-                  {p.discount_percentage && (
-                    <p className="text-green-600 font-medium text-sm">{p.discount_percentage}% OFF</p>
+                <Card
+                  key={p.product_id}
+                  className="overflow-hidden flex flex-col"
+                >
+                  {p.images && p.images.length > 0 && (
+                    <div className="w-full h-48 bg-muted relative">
+                      <img
+                        src={p.images[0].url}
+                        alt={p.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
                   )}
-                </CardContent>
-                <CardFooter>
-                  <CardAction>
-                    <Button onClick={() => handleAddToCart(p)} className="w-full">
-                      Add to Cart
-                    </Button>
-                  </CardAction>
-                </CardFooter>
-              </Card>
-            ))}
+                  <CardHeader>
+                    <CardTitle>{p.name}</CardTitle>
+                    <CardDescription>{p.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="font-semibold text-lg">${p.price}</p>
+                      {p.original_price && (
+                        <p className="line-through text-muted-foreground text-sm">
+                          ${p.original_price}
+                        </p>
+                      )}
+                    </div>
+                    {p.discount_percentage && (
+                      <p className="text-green-600 font-medium text-sm">
+                        {p.discount_percentage}% OFF
+                      </p>
+                    )}
+                  </CardContent>
+                  <CardFooter>
+                    <CardAction>
+                      <Button
+                        onClick={() => handleAddToCart(p)}
+                        className="w-full bg-blue-500 text-blue-50"
+                      >
+                        Add to Cart
+                      </Button>
+                    </CardAction>
+                  </CardFooter>
+                </Card>
+              ))}
           </>
         ) : (
           <p>No products found</p>

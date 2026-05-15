@@ -107,14 +107,18 @@ export default function SalesPage() {
   );
 
   const exportToExcel = () => {
-    const wsData = filteredSales.map((sale) => ({
-      "Transaction ID": sale.sales_id,
-      "Customer Name": sale.users?.name || sale.user_id?.slice(0, 8) || "Guest",
-      Date: new Date(sale.sale_date).toLocaleString(),
-      "Payment Method": sale.payment?.method || "Unknown",
-      "Amount ($)": Number(sale.payment?.amount || 0).toFixed(2),
-      Status: sale.payment?.status || "Unknown",
-    }));
+    const wsData = filteredSales.map((sale) => {
+      const productsString = sale.sales_product_quantities?.map((i: any) => `${i.product?.name} (x${i.quantity})`).join(", ") || "No products";
+      return {
+        "Transaction ID": sale.sales_id,
+        "Customer Name": sale.users?.name || sale.user_id?.slice(0, 8) || "Guest",
+        Date: new Date(sale.sale_date).toLocaleString(),
+        "Products": productsString,
+        "Payment Method": sale.payment?.method || "Unknown",
+        "Amount ($)": Number(sale.payment?.amount || 0).toFixed(2),
+        Status: sale.payment?.status || "Unknown",
+      };
+    });
 
     const ws = XLSX.utils.json_to_sheet(wsData);
     const wb = XLSX.utils.book_new();
@@ -139,6 +143,7 @@ export default function SalesPage() {
       "Transaction ID",
       "Customer",
       "Date",
+      "Products",
       "Method",
       "Amount",
     ];
@@ -146,6 +151,7 @@ export default function SalesPage() {
       sale.sales_id.slice(0, 8) + "...",
       sale.users?.name || "Guest",
       new Date(sale.sale_date).toLocaleDateString(),
+      sale.sales_product_quantities?.map((i: any) => `${i.product?.name} (x${i.quantity})`).join(", ") || "No products",
       sale.payment?.method || "Unknown",
       `$${Number(sale.payment?.amount || 0).toFixed(2)}`,
     ]);
@@ -161,6 +167,39 @@ export default function SalesPage() {
     });
 
     doc.save(`Sales_Report_${filterType}.pdf`);
+  };
+
+  const downloadReceipt = (sale: any) => {
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text("Sales Receipt", 14, 22);
+    doc.setFontSize(11);
+    doc.text(`Transaction ID: ${sale.sales_id}`, 14, 32);
+    doc.text(`Date: ${new Date(sale.sale_date).toLocaleString()}`, 14, 38);
+    doc.text(`Customer: ${sale.users?.name || sale.user_id?.slice(0, 8) || "Guest"}`, 14, 44);
+    doc.text(`Payment Method: ${sale.payment?.method || "Unknown"}`, 14, 50);
+    doc.text(`Status: ${sale.payment?.status || "Unknown"}`, 14, 56);
+
+    const productsData = sale.sales_product_quantities?.map((item: any) => [
+      item.product?.name || "Unknown Product",
+      item.quantity,
+      `$${Number(item.product?.price || 0).toFixed(2)}`,
+      `$${(item.quantity * Number(item.product?.price || 0)).toFixed(2)}`
+    ]) || [];
+
+    // @ts-ignore
+    doc.autoTable({
+      startY: 65,
+      head: [["Product", "Quantity", "Unit Price", "Total"]],
+      body: productsData,
+      theme: "grid",
+    });
+
+    const finalY = (doc as any).lastAutoTable.finalY || 65;
+    doc.setFontSize(12);
+    doc.text(`Total Amount paid: $${Number(sale.payment?.amount || 0).toFixed(2)}`, 14, finalY + 10);
+    
+    doc.save(`Receipt_${sale.sales_id.slice(0, 8)}.pdf`);
   };
 
   return (
@@ -245,22 +284,24 @@ export default function SalesPage() {
               <TableHead>Transaction ID</TableHead>
               <TableHead>Customer</TableHead>
               <TableHead>Date</TableHead>
+              <TableHead>Products</TableHead>
               <TableHead>Payment Method</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Amount</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
+                <TableCell colSpan={8} className="h-24 text-center">
                   Loading...
                 </TableCell>
               </TableRow>
             ) : filteredSales.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={6}
+                  colSpan={8}
                   className="h-24 text-center text-muted-foreground"
                 >
                   No sales found for the selected filters.
@@ -277,6 +318,19 @@ export default function SalesPage() {
                   </TableCell>
                   <TableCell>
                     {new Date(sale.sale_date).toLocaleString()}
+                  </TableCell>
+                  <TableCell>
+                    {sale.sales_product_quantities && sale.sales_product_quantities.length > 0 ? (
+                      <ul className="list-disc pl-4 text-xs">
+                        {sale.sales_product_quantities.map((item: any) => (
+                          <li key={item.id}>
+                            {item.product?.name || 'Unknown Product'} (x{item.quantity})
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">No products</span>
+                    )}
                   </TableCell>
                   <TableCell className="capitalize">
                     {sale.payment?.method || "N/A"}
@@ -296,6 +350,11 @@ export default function SalesPage() {
                   </TableCell>
                   <TableCell className="text-right font-medium">
                     ${Number(sale.payment?.amount || 0).toFixed(2)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="sm" onClick={() => downloadReceipt(sale)} title="Download Receipt">
+                      <Download className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))
