@@ -240,19 +240,110 @@ export const rejectSale = async (req, res) => {
 
 export const getSale = async (req, res) => {
   try {
-    const sales = await prisma.sales.findMany({
-      include: {
-        payment: true,
-        users: true,
-        sales_product_quantities: {
-          include: {
-            product: true,
+    const { page: qPage, limit: qLimit, search, startDate, endDate, status } = req.query;
+    
+    const page = Math.max(1, parseInt(qPage, 10) || 1);
+    const limit = Math.max(1, parseInt(qLimit, 10) || 10);
+    const skip = (page - 1) * limit;
+
+    const where = {};
+
+    // Date range filter
+    if (startDate || endDate) {
+      where.sale_date = {};
+      if (startDate) where.sale_date.gte = new Date(startDate);
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        where.sale_date.lte = end;
+      }
+    }
+
+    // Search filter (customer name or transaction ID)
+    if (search) {
+      where.OR = [
+        { sales_id: { contains: search, mode: 'insensitive' } },
+        { users: { name: { contains: search, mode: 'insensitive' } } }
+      ];
+    }
+
+    // Status filter (via payment relation)
+    if (status) {
+      where.payment = { status: status };
+    }
+
+    const [total, sales, summaryData] = await Promise.all([
+      prisma.sales.count({ where }),
+      prisma.sales.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { sale_date: "desc" },
+        include: {
+          payment: true,
+          users: true,
+          sales_product_quantities: {
+            include: {
+              product: true,
+            },
           },
         },
-      },
+      }),
+      // Fetch all filtered sales for summary stats (limited fields for performance)
+      prisma.sales.findMany({
+        where,
+        select: {
+          payment: {
+            select: {
+              amount: true,
+              status: true,
+              method: true,
+            }
+          },
+          sale_date: true
+        }
+      })
+    ]);
+
+    // Calculate Summary Stats
+    let totalRevenue = 0;
+    let completedCount = 0;
+    let pendingCount = 0;
+    const paymentMethods = {};
+    const dailyTrend = {};
+
+    summaryData.forEach(sale => {
+      const amount = Number(sale.payment?.amount || 0);
+      const sStatus = sale.payment?.status;
+      const method = sale.payment?.method || 'Unknown';
+      const dateStr = sale.sale_date.toISOString().split('T')[0];
+
+      totalRevenue += amount;
+      if (sStatus === 'completed') completedCount++;
+      if (sStatus === 'pending') pendingCount++;
+
+      paymentMethods[method] = (paymentMethods[method] || 0) + amount;
+      dailyTrend[dateStr] = (dailyTrend[dateStr] || 0) + amount;
     });
 
-    res.status(200).json(sales);
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+
+    res.status(200).json({ 
+      sales, 
+      total, 
+      page, 
+      totalPages,
+      summary: {
+        totalRevenue,
+        totalTransactions: total,
+        completedSales: completedCount,
+        pendingApprovals: pendingCount,
+        revenueByPaymentMethod: Object.entries(paymentMethods).map(([name, value]) => ({ name, value })),
+        dailySalesTrend: Object.entries(dailyTrend)
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([date, amount]) => ({ date, amount }))
+      }
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Internal server error", status: 500 });

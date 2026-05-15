@@ -14,9 +14,11 @@ This is a full-stack e-commerce application built with Next.js for the frontend 
 1. Clone the repository:
 
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/nurezf/thrive-2018-1.git
    cd thrive-2018-1
    ```
+
+   use sales branch for full project if not visible
 
 2. Set up the backend:
 
