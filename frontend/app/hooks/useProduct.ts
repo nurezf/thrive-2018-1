@@ -1,7 +1,7 @@
-
 //handle cart and prducts using custom hook by zustand
 import { create } from "zustand";
 import { Product } from "../admin/products/page";
+import { toast } from "sonner";
 
 interface ProductState {
   product: Product | null;

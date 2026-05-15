@@ -27,8 +27,11 @@ import {
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Image from "next/image";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { jwtDecode } from "jwt-decode";
 
-const menuItems = [
+let menuItems = [
   {
     title: "Dashboard",
     icon: LayoutDashboard,
@@ -70,7 +73,17 @@ const settingsItems = [
 ];
 
 export function AdminSidebar() {
+  const [menu, setMenu] = useState([]);
   const pathname = usePathname();
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      const decoded: any = jwtDecode(token);
+      if (decoded.role !== "manager") {
+        setMenu(menuItems.filter((item) => item.href !== "/admin/approvals"));
+      }
+    }
+  }, []);
 
   return (
     <Sidebar>
@@ -96,7 +109,7 @@ export function AdminSidebar() {
           <SidebarGroupLabel>Main Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
+              {menu.map((item) => (
                 <SidebarMenuItem key={item.href} className="text-sm my-3 p-4 ">
                   <SidebarMenuButton
                     isActive={pathname === item.href}

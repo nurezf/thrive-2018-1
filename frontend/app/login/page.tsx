@@ -13,6 +13,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { z } from "zod";
+import { jwtDecode } from "jwt-decode";
 
 import { useRouter } from "next/navigation";
 import axios from "axios";
@@ -87,6 +88,7 @@ function LoginPage() {
       toast.success("Logged in successfully");
 
       localStorage.setItem("accessToken", res.data.accessToken);
+      const decodedToken: any = jwtDecode(res.data.accessToken);
 
       if (res.data.refreshToken) {
         localStorage.setItem("refreshToken", res.data.refreshToken);

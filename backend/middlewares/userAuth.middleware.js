@@ -5,6 +5,8 @@ const prisma = new PrismaClient();
 export const userAuthMiddleware = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
+  console.log("Auth Header:", authHeader);
+
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     // Temporary bypass for development
     req.user = { id: "dev_user", role: "manager" };

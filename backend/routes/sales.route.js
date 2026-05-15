@@ -7,6 +7,7 @@ import {
   getSaleProductQuantity,
   getSaleProductQuantityBySalesId,
   getSaleById,
+  getSalesByDate,
 } from "../controllers/sales.controller.js";
 import { userAuthMiddleware } from "../middlewares/userAuth.middleware.js";
 
@@ -22,6 +23,8 @@ router.get(
   userAuthMiddleware,
   getSaleProductQuantityBySalesId,
 );
+router.get("/date/:date", getSalesByDate);
+
 router.get("/:sales_id", userAuthMiddleware, getSaleById);
 
 export default router;

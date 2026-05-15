@@ -20,11 +20,14 @@ import {
 } from "@/components/ui/card";
 import { Check, X, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { jwtDecode } from "jwt-decode";
+import { useRouter } from "next/navigation";
 
 export default function ApprovalsPage() {
   const [pendingSales, setPendingSales] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchPendingSales = async () => {
@@ -47,6 +50,19 @@ export default function ApprovalsPage() {
       }
     };
     fetchPendingSales();
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      const decoded: any = jwtDecode(token);
+      if (decoded.role !== "manager") {
+        toast.error("Access denied: Manager role required");
+        router.push("/login");
+      }
+    } else {
+      toast.error("Please log in to access approvals");
+    }
   }, []);
 
   const handleAction = async (

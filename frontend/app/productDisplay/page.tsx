@@ -15,6 +15,7 @@ import { Product } from "@/app/admin/products/page";
 import { ShoppingCart } from "lucide-react";
 import { useProductStore } from "../hooks/useProduct";
 import Link from "next/link";
+import { toast } from "sonner";
 
 export default function ProductDisplay() {
   const {
@@ -134,7 +135,10 @@ export default function ProductDisplay() {
                   <CardFooter>
                     <CardAction>
                       <Button
-                        onClick={() => handleAddToCart(p)}
+                        onClick={() => {
+                          handleAddToCart(p);
+                          toast.success(`${p.name} added to cart!`);
+                        }}
                         className="w-full bg-blue-500 text-blue-50"
                       >
                         Add to Cart

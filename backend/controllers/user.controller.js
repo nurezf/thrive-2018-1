@@ -43,13 +43,13 @@ export const registerUser = async (req, res) => {
     });
 
     const accessToken = jwt.sign(
-      { user_id: user.user_id },
+      { user_id: user.user_id, role: user.role },
       process.env.JWT_ACCESS_SECRET,
       { expiresIn: "1d" },
     );
 
     const refreshToken = jwt.sign(
-      { user_id: user.user_id },
+      { user_id: user.user_id, role: user.role },
       process.env.JWT_REFRESH_SECRET,
       { expiresIn: "7d" },
     );
@@ -86,13 +86,13 @@ export const login = async (req, res) => {
     }
 
     const accessToken = jwt.sign(
-      { user_id: user.user_id },
+      { user_id: user.user_id, role: user.role },
       process.env.JWT_ACCESS_SECRET,
       { expiresIn: "1d" },
     );
 
     const refreshToken = jwt.sign(
-      { user_id: user.user_id },
+      { user_id: user.user_id, role: user.role },
       process.env.JWT_REFRESH_SECRET,
       { expiresIn: "7d" },
     );

@@ -172,16 +172,16 @@ export const rejectSale = async (req, res) => {
   console.log(req.user);
 
   const { sales_id } = req.params;
-  const { user_id } = req.user;
+  // const { user_id } = req.user;
 
-  const user = await prisma.users.findUnique({
-    where: { user_id: user_id },
-  });
-  const role = user.role;
+  // const user = await prisma.users.findUnique({
+  //   where: { user_id: user_id },
+  // });
+  // const role = user.role;
 
-  if (role !== "manager") {
-    return res.status(403).json({ error: "Manager approval required" });
-  }
+  // if (role !== "manager") {
+  //   return res.status(403).json({ error: "Manager approval required" });
+  // }
 
   try {
     const sale = await prisma.sales.findUnique({
@@ -308,6 +308,34 @@ export const getSaleProductQuantityBySalesId = async (req, res) => {
         },
       });
     res.status(200).json(salesProductQuantities);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Internal server error", status: 500 });
+  }
+};
+
+export const getSalesByDate = async (req, res) => {
+  const { date } = req.params;
+  try {
+    const sales = await prisma.sales.findMany({
+      where: {
+        created_at: {
+          gte: new Date(date),
+          lt: new Date(new Date(date).setDate(new Date(date).getDate() + 1)),
+        },
+      },
+      include: {
+        payment: true,
+        users: true,
+        sales_product_quantities: {
+          include: {
+            product: true,
+          },
+        },
+      },
+    });
+
+    res.status(200).json(sales);
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Internal server error", status: 500 });
