@@ -151,7 +151,7 @@ export default function ApprovalsPage() {
                           <Button
                             size="sm"
                             variant="default"
-                            className="bg-green-600 hover:bg-green-700"
+                            className="bg-green-200 hover:bg-green-400 text-black"
                             disabled={processingId === sale.sales_id}
                             onClick={() =>
                               handleAction(sale.sales_id, "approve")
