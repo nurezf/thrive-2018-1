@@ -13,10 +13,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Download, FileText, Search, BarChart3 } from "lucide-react";
+import { Download, Search, BarChart3 } from "lucide-react";
 import * as XLSX from "xlsx";
-import jsPDF from "jspdf";
-import "jspdf-autotable";
 import SalesDialog from "@/app/admin/sales/salesDialog.tsx";
 import {
   BarChart,
@@ -63,16 +61,61 @@ export default function SalesPage() {
   );
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [summary, setSummary] = useState({
+    totalRevenue: 0,
+    totalTransactions: 0,
+    completedSales: 0,
+    pendingApprovals: 0,
+    revenueByPaymentMethod: [] as { name: string; value: number }[],
+    dailySalesTrend: [] as { date: string; amount: number }[],
+  });
+
+  // Pagination state
+  const [page, setPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [limit, setLimit] = useState<number>(10);
 
   useEffect(() => {
     const fetchSales = async () => {
       try {
         setIsLoading(true);
+        const now = new Date();
+        let start, end;
+
+        if (filterType === "daily") {
+          start = new Date(now.setHours(0, 0, 0, 0)).toISOString();
+          end = new Date(now.setHours(23, 59, 59, 999)).toISOString();
+        } else if (filterType === "monthly") {
+          start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+          end = new Date(
+            now.getFullYear(),
+            now.getMonth() + 1,
+            0,
+            23,
+            59,
+            59,
+            999,
+          ).toISOString();
+        }
+
         const response = await axios.get("http://localhost:8000/api/sales", {
+          params: {
+            page,
+            limit,
+            search: searchTerm || undefined,
+            startDate: start,
+            endDate: end,
+          },
           headers: { Authorization: "Bearer dev_token" },
         });
-        setSales(response.data);
-        setFilteredSales(response.data);
+
+        const data = response.data;
+        setSales(data.sales || []);
+        setFilteredSales(data.sales || []);
+        setTotalPages(data.totalPages || 1);
+        if (data.summary) {
+          setSummary(data.summary);
+        }
       } catch (error) {
         console.error("Failed to fetch sales", error);
       } finally {
@@ -80,53 +123,16 @@ export default function SalesPage() {
       }
     };
     fetchSales();
-  }, []);
+  }, [page, limit, filterType, searchTerm]);
 
+  // Reset to page 1 when filters change
   useEffect(() => {
-    const applyFilters = () => {
-      let result = [...sales];
+    setPage(1);
+  }, [filterType, searchTerm, limit]);
 
-      // Date filtering
-      const now = new Date();
-      if (filterType === "daily") {
-        result = result.filter((sale) => {
-          const saleDate = new Date(sale.sale_date);
-          return saleDate.toDateString() === now.toDateString();
-        });
-      } else if (filterType === "monthly") {
-        result = result.filter((sale) => {
-          const saleDate = new Date(sale.sale_date);
-          return (
-            saleDate.getMonth() === now.getMonth() &&
-            saleDate.getFullYear() === now.getFullYear()
-          );
-        });
-      }
+  // Local filtering logic removed as it's now handled server-side
 
-      // Search filtering
-      if (searchTerm) {
-        result = result.filter(
-          (sale) =>
-            sale.users?.name
-              ?.toLowerCase()
-              .includes(searchTerm.toLowerCase()) ||
-            sale.payment?.method
-              ?.toLowerCase()
-              .includes(searchTerm.toLowerCase()) ||
-            sale.sales_id.toLowerCase().includes(searchTerm.toLowerCase()),
-        );
-      }
-
-      setFilteredSales(result);
-    };
-
-    applyFilters();
-  }, [filterType, sales, searchTerm]);
-
-  const totalRevenue = filteredSales.reduce(
-    (sum, sale) => sum + Number(sale.payment?.amount || 0),
-    0,
-  );
+  const totalRevenue = summary.totalRevenue;
 
   const exportToExcel = () => {
     const wsData = filteredSales.map((sale) => {
@@ -152,79 +158,13 @@ export default function SalesPage() {
     XLSX.writeFile(wb, `Sales_Report_${filterType}.xlsx`);
   };
 
-  const exportToPDF = () => {
-    const doc = new jsPDF();
-
-    // Add Title
-    doc.setFontSize(18);
-    doc.text(`Sales Report - ${filterType.toUpperCase()}`, 14, 22);
-
-    // Add Meta
-    doc.setFontSize(11);
-    doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
-    doc.text(`Total Records: ${filteredSales.length}`, 14, 36);
-    doc.text(`Total Revenue: $${totalRevenue.toFixed(2)}`, 14, 42);
-
-    const tableColumn = [
-      "Transaction ID",
-      "Customer",
-      "Date",
-      "Products",
-      "Method",
-      "Amount",
-    ];
-    const tableRows = filteredSales.map((sale) => [
-      sale.sales_id.slice(0, 8) + "...",
-      sale.users?.name || "Guest",
-      new Date(sale.sale_date).toLocaleDateString(),
-      sale.sales_product_quantities
-        ?.map((i: ProductQuantity) => `${i.product?.name} (x${i.quantity})`)
-        .join(", ") || "No products",
-      sale.payment?.method || "Unknown",
-      `$${Number(sale.payment?.amount || 0).toFixed(2)}`,
-    ]);
-
-    // @ts-expect-error - jsPDF autoTable types
-    doc.autoTable({
-      head: [tableColumn],
-      body: tableRows,
-      startY: 50,
-      theme: "grid",
-      styles: { fontSize: 9 },
-      headStyles: { fillColor: [41, 128, 185] },
-    });
-
-    doc.save(`Sales_Report_${filterType}.pdf`);
-  };
 
   const chartData = React.useMemo(() => {
-    const paymentMethods: Record<string, number> = {};
-    const dailySales: Record<string, number> = {};
-
-    filteredSales.forEach((sale) => {
-      const method = sale.payment?.method || "Unknown";
-      paymentMethods[method] =
-        (paymentMethods[method] || 0) + Number(sale.payment?.amount || 0);
-
-      const date = new Date(sale.sale_date).toLocaleDateString();
-      dailySales[date] =
-        (dailySales[date] || 0) + Number(sale.payment?.amount || 0);
-    });
-
-    const pieData = Object.entries(paymentMethods).map(([method, amount]) => ({
-      name: method,
-      value: amount,
-    }));
-
-    const barData = Object.entries(dailySales)
-      .sort(([a], [b]) => new Date(a).getTime() - new Date(b).getTime())
-      .map(([date, amount]) => ({
-        date,
-        amount,
-      }));
-
-    return { pieData, barData };
-  }, [filteredSales]);
+    return {
+      pieData: summary.revenueByPaymentMethod,
+      barData: summary.dailySalesTrend,
+    };
+  }, [summary]);
 
   return (
     <div className="flex-1 space-y-6 p-8 pt-6">
@@ -244,6 +184,46 @@ export default function SalesPage() {
             <FileText className="mr-2 h-4 w-4" />
             Export PDF
           </Button> */}
+
+          <div className="ml-4 flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-muted-foreground whitespace-nowrap">Rows:</span>
+              <select
+                className="h-8 w-[70px] rounded-md border border-input bg-transparent px-2 py-1 text-xs"
+                value={limit}
+                onChange={(e) => setLimit(Number(e.target.value))}
+              >
+                {[10, 20, 50, 100].map((v) => (
+                  <option key={v} value={v}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1}
+              >
+                Prev
+              </Button>
+              <div className="flex items-center space-x-1">
+                <span className="text-sm font-medium">{page}</span>
+                <span className="text-sm text-muted-foreground">/</span>
+                <span className="text-sm text-muted-foreground">{totalPages}</span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -256,7 +236,7 @@ export default function SalesPage() {
           <CardContent>
             <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
-              From {filteredSales.length} transactions
+              From {summary.totalTransactions} transactions
             </p>
           </CardContent>
         </Card>
@@ -267,8 +247,8 @@ export default function SalesPage() {
           <CardContent>
             <div className="text-2xl font-bold">
               $
-              {filteredSales.length > 0
-                ? (totalRevenue / filteredSales.length).toFixed(2)
+              {summary.totalTransactions > 0
+                ? (totalRevenue / summary.totalTransactions).toFixed(2)
                 : "0.00"}
             </div>
             <p className="text-xs text-muted-foreground">Per transaction</p>
@@ -281,12 +261,7 @@ export default function SalesPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {
-                filteredSales.filter((s) => s.payment?.status === "completed")
-                  .length
-              }
-            </div>
+            <div className="text-2xl font-bold">{summary.completedSales}</div>
             <p className="text-xs text-muted-foreground">
               Successful transactions
             </p>
@@ -299,12 +274,7 @@ export default function SalesPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {
-                filteredSales.filter((s) => s.payment?.status === "pending")
-                  .length
-              }
-            </div>
+            <div className="text-2xl font-bold">{summary.pendingApprovals}</div>
             <p className="text-xs text-muted-foreground">
               Awaiting manager approval
             </p>
@@ -517,6 +487,64 @@ export default function SalesPage() {
                 )}
               </TableBody>
             </Table>
+          </div>
+          <div className="flex items-center justify-between space-x-2 py-4">
+            <div className="text-sm text-muted-foreground">
+              Showing {sales.length} of {summary.totalTransactions} transactions
+            </div>
+            <div className="flex items-center space-x-6 lg:space-x-8">
+              <div className="flex items-center space-x-2">
+                <p className="text-sm font-medium">Rows per page</p>
+                <select
+                  className="h-8 w-[70px] rounded-md border border-input bg-transparent px-2 py-1 text-xs"
+                  value={limit}
+                  onChange={(e) => setLimit(Number(e.target.value))}
+                >
+                  {[10, 20, 50, 100].map((v) => (
+                    <option key={v} value={v}>
+                      {v}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+                Page {page} of {totalPages}
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  className="h-8 w-8 p-0"
+                  onClick={() => setPage(1)}
+                  disabled={page === 1}
+                >
+                  {"<<"}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-8 w-8 p-0"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                >
+                  {"<"}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-8 w-8 p-0"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                >
+                  {">"}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-8 w-8 p-0"
+                  onClick={() => setPage(totalPages)}
+                  disabled={page === totalPages}
+                >
+                  {">>"}
+                </Button>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
