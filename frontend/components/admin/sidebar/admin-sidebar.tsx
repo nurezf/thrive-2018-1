@@ -27,11 +27,9 @@ import {
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Image from "next/image";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
 import { jwtDecode } from "jwt-decode";
 
-let menuItems = [
+const menuItems = [
   {
     title: "Dashboard",
     icon: LayoutDashboard,
@@ -73,17 +71,27 @@ const settingsItems = [
 ];
 
 export function AdminSidebar() {
-  const [menu, setMenu] = useState([]);
   const pathname = usePathname();
-  useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    if (token) {
-      const decoded: any = jwtDecode(token);
-      if (decoded.role !== "manager") {
-        setMenu(menuItems.filter((item) => item.href !== "/admin/approvals"));
-      }
-    }
-  }, []);
+  const token = localStorage.getItem("accessToken");
+
+  const decoded = token
+    ? (jwtDecode(token) as {
+        name?: string;
+        email?: string;
+        role?: string;
+      })
+    : null;
+
+  const menu =
+    decoded?.role !== "manager"
+      ? menuItems.filter((item) => item.href !== "/admin/approvals")
+      : menuItems;
+
+  const userInfo = {
+    name: decoded?.name || "Admin User",
+    email: decoded?.email || "admin@mosque.org",
+    role: decoded?.role || "Administrator",
+  };
 
   return (
     <Sidebar>
@@ -109,20 +117,30 @@ export function AdminSidebar() {
           <SidebarGroupLabel>Main Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menu.map((item) => (
-                <SidebarMenuItem key={item.href} className="text-sm my-3 p-4 ">
-                  <SidebarMenuButton
-                    isActive={pathname === item.href}
-                    tooltip={item.title}
-                    className="flex items-center gap-2 p-5 rounded-2xl"
-                  >
-                    <Link href={item.href} className="flex gap-2">
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {menu.map((item) => {
+                const active = pathname === item.href;
+                return (
+                  <SidebarMenuItem key={item.href} className="rounded-3xl">
+                    <SidebarMenuButton
+                      isActive={active}
+                      tooltip={item.title}
+                      className={`flex items-center gap-3 rounded-3xl p-4 text-sm transition-all ${
+                        active
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+                      }`}
+                    >
+                      <Link
+                        href={item.href}
+                        className="flex w-full items-center gap-3"
+                      >
+                        <item.icon className="size-4" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -133,36 +151,50 @@ export function AdminSidebar() {
           <SidebarGroupLabel>System</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {settingsItems.map((item) => (
-                <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton
-                    isActive={pathname === item.href}
-                    tooltip={item.title}
-                  >
-                    <Link href={item.href}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {settingsItems.map((item) => {
+                const active = pathname === item.href;
+                return (
+                  <SidebarMenuItem key={item.href} className="rounded-3xl">
+                    <SidebarMenuButton
+                      isActive={active}
+                      tooltip={item.title}
+                      className={`flex items-center gap-3 rounded-3xl p-4 text-sm transition-all ${
+                        active
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+                      }`}
+                    >
+                      <Link
+                        href={item.href}
+                        className="flex w-full items-center gap-3"
+                      >
+                        <item.icon className="size-4" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t p-4">
-        <div className="flex items-center gap-3">
-          <Avatar className="size-8">
-            <AvatarImage src="" alt="Admin" />
+      <SidebarFooter className="border-t p-6">
+        <div className="flex items-center gap-3 rounded-3xl bg-slate-50 p-4 shadow-sm">
+          <Avatar className="size-10">
+            <AvatarImage src="" alt={userInfo.name} />
             <AvatarFallback className="bg-primary text-primary-foreground">
               <User className="size-4" />
             </AvatarFallback>
           </Avatar>
-          <div className="flex flex-col">
-            <span className="text-sm font-medium">Admin User</span>
-            <span className="text-xs text-muted-foreground">
-              admin@mosque.org
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-foreground">
+              {userInfo.name}
+            </p>
+            <p className="text-xs text-muted-foreground">{userInfo.email}</p>
+            <span className="mt-2 inline-flex rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-primary">
+              {userInfo.role}
             </span>
           </div>
         </div>

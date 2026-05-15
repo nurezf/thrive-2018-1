@@ -155,7 +155,7 @@ function DashboardHome() {
               <CardContent>
                 <div className="text-2xl font-bold">+{sales.length}</div>
                 <p className="text-xs text-muted-foreground">
-                  Total orders placed
+                  Total sales placed
                 </p>
               </CardContent>
             </Card>

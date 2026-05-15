@@ -96,7 +96,7 @@ function LoginPage() {
 
       localStorage.setItem("user", JSON.stringify(res.data.user));
 
-      router.push("/");
+      router.push("/admin/dashboard");
     } catch (error: any) {
       const errorMsg =
         error?.response?.data?.message || error.message || "Login failed";

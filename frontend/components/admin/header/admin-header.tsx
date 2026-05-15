@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import Link from "next/link";
 
 export function AdminHeader() {
   return (
@@ -23,6 +24,9 @@ export function AdminHeader() {
         <div className="flex items-center gap-2">
           <h1 className="text-lg font-semibold">Admin Dashboard</h1>
         </div>
+        <Button variant="outline" size="sm">
+          <Link href="/productDisplay">View Store</Link>
+        </Button>
 
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" className="relative">
@@ -32,7 +36,9 @@ export function AdminHeader() {
           </Button>
 
           <DropdownMenu>
-            <DropdownMenuTrigger className={cn(buttonVariants({ variant: "ghost" }), "gap-2")}>
+            <DropdownMenuTrigger
+              className={cn(buttonVariants({ variant: "ghost" }), "gap-2")}
+            >
               <Avatar className="size-8">
                 <AvatarImage src="" alt="Admin" />
                 <AvatarFallback className="bg-primary text-primary-foreground">

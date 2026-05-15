@@ -82,6 +82,9 @@ export default function ProductDisplay() {
         <Button>
           <Link href="/checkout">checkout</Link>
         </Button>
+        <Button>
+          <Link href="/admin/dashboard">Admin Dashboard</Link>
+        </Button>
       </header>
       <section className="grid grid-cols-4 gap-4">
         {loading ? (
