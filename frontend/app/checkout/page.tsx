@@ -22,6 +22,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import axios from "axios";
+import { toast } from "sonner";
 
 export default function CheckoutPage() {
   const { cart } = useProductStore();
@@ -128,14 +129,14 @@ export default function CheckoutPage() {
               clearInterval(pollInterval);
               setIsPolling(false);
               setIsCheckingOut(false);
-              alert("Sale approved and completed successfully!");
+              toast.success("Sale approved and completed successfully!");
               useProductStore.setState({ cart: [] });
               setIsDialogOpen(false);
             } else if (status === "failed") {
               clearInterval(pollInterval);
               setIsPolling(false);
               setIsCheckingOut(false);
-              alert("Sale was rejected by the manager.");
+              toast.error("Sale was rejected by the manager.");
               setIsDialogOpen(false);
             }
           } catch (e) {
@@ -145,7 +146,7 @@ export default function CheckoutPage() {
       } else {
         const successMessage =
           response.data?.message || "Sale created successfully!";
-        alert(successMessage);
+        toast.success(successMessage);
         useProductStore.setState({ cart: [] });
         setIsDialogOpen(false);
         setIsCheckingOut(false);
@@ -156,7 +157,7 @@ export default function CheckoutPage() {
       const message =
         error instanceof Error ? error.message : JSON.stringify(error, null, 2);
 
-      alert("Checkout failed: " + message);
+      toast.error("Checkout failed: " + message);
       setIsCheckingOut(false);
     }
   }

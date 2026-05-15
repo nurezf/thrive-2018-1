@@ -97,9 +97,10 @@ export default function ProductAdd() {
 
     if (!parsed.success) {
       const formattedErrors: Record<string, string> = {};
-      parsed.error.errors.forEach((issue) => {
-        if (issue.path[0]) {
-          formattedErrors[String(issue.path[0])] = issue.message;
+      parsed.error.issues.forEach((issue) => {
+        const field = issue.path[0];
+        if (field) {
+          formattedErrors[String(field)] = issue.message;
         }
       });
       setErrors(formattedErrors);
@@ -360,7 +361,11 @@ export default function ProductAdd() {
             </div>
           </div>
         </form>
-        <Button type="submit" onClick={handleSubmit}>
+        <Button
+          type="submit"
+          className="w-full bg-black p-2 text-white rounded-md"
+          onClick={handleSubmit}
+        >
           Add Product
         </Button>
       </DialogContent>

@@ -1,4 +1,5 @@
 import { PrismaClient } from "../generated/prisma/index.js";
+import { createLowStockNotifications } from "./notification.controller.js";
 const prisma = new PrismaClient();
 
 export const createProduct = async (req, res) => {
@@ -37,6 +38,7 @@ export const createProduct = async (req, res) => {
         specifications,
       },
     });
+    await createLowStockNotifications(newProduct);
     res.status(201).json(newProduct);
     console.log("Product created successfully:", newProduct);
   } catch (error) {
@@ -48,7 +50,7 @@ export const createProduct = async (req, res) => {
 export const getAllProducts = async (req, res) => {
   try {
     const products = await prisma.products.findMany({
-      include: { images: true }
+      include: { images: true },
     });
     res.status(200).json(products);
   } catch (error) {
@@ -85,6 +87,13 @@ export const updateProduct = async (req, res) => {
     image_url,
   } = req.body;
   try {
+    const existingProduct = await prisma.products.findUnique({
+      where: { product_id: id },
+    });
+    if (!existingProduct) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
     const updatedProduct = await prisma.products.update({
       where: { product_id: id },
       data: {
@@ -98,6 +107,8 @@ export const updateProduct = async (req, res) => {
         specifications,
       },
     });
+
+    await createLowStockNotifications(updatedProduct);
     res.status(200).json(updatedProduct);
   } catch (error) {
     res.status(500).json({ error: "Failed to update product" });

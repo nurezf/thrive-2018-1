@@ -1,4 +1,5 @@
 import { PrismaClient } from "../generated/prisma/client.js";
+import { createLowStockNotifications } from "./notification.controller.js";
 
 const prisma = new PrismaClient();
 
@@ -112,6 +113,13 @@ export const createSale = async (req, res) => {
         });
       }
     });
+
+    const lowStockProducts = await prisma.products.findMany({
+      where: { stock: { lt: 5 } },
+    });
+    for (const product of lowStockProducts) {
+      await createLowStockNotifications(product);
+    }
 
     if (requiresApproval) {
       return res.status(201).json({

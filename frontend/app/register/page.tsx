@@ -13,6 +13,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { z } from "zod";
 
 function RegisterPage() {
   const router = useRouter();
@@ -27,17 +28,56 @@ function RegisterPage() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<{
+    name?: string;
+    username?: string;
+    email?: string;
+    password?: string;
+    phone?: string;
+    role?: string;
+  }>({});
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
-    setFormData({ ...formData, [e.target.id]: e.target.value });
+    const { id, value } = e.target;
+    setFormData({ ...formData, [id]: value });
+
+    if (errors[id as keyof typeof errors]) {
+      setErrors((prev) => ({ ...prev, [id]: undefined }));
+    }
   };
+
+  const registerSchema = z.object({
+    name: z.string().min(2, "Full name is required"),
+    username: z.string().min(3, "Username must be at least 3 characters"),
+    email: z.string().email("Invalid email address"),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+    phone: z
+      .string()
+      .min(10, "Phone number is required")
+      .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/i, "Invalid phone number"),
+    role: z.enum(["salesOfficer", "manager"]),
+  });
 
   const register = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
+    setErrors({});
+
+    const validation = registerSchema.safeParse(formData);
+    if (!validation.success) {
+      const fieldErrors: typeof errors = {};
+      validation.error.issues.forEach((issue) => {
+        const field = issue.path[0] as keyof typeof errors;
+        fieldErrors[field] = issue.message;
+      });
+      setErrors(fieldErrors);
+      return;
+    }
+
+    setLoading(true);
+
     try {
       const res = await fetch("http://localhost:8000/api/users/register", {
         method: "POST",
@@ -54,7 +94,6 @@ function RegisterPage() {
       }
       toast.success("Account created successfully!");
 
-      // Auto-login after register
       if (data.accessToken) {
         localStorage.setItem("accessToken", data.accessToken);
         if (data.refreshToken)
@@ -64,15 +103,19 @@ function RegisterPage() {
       } else {
         router.push("/login");
       }
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error: unknown) {
+      const message =
+        typeof error === "object" && error !== null && "message" in error
+          ? String((error as { message?: string }).message)
+          : "Registration failed";
+      setError(message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <section className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-800 p-4 py-12">
+    <section className="min-h-screen flex items-center justify-center bg-linear-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-800 p-4 py-12">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-lg">Create an Account</CardTitle>
@@ -87,8 +130,13 @@ function RegisterPage() {
                 onChange={handleChange}
                 placeholder="John Doe"
                 required
-                className="mt-1"
+                className={`mt-1 ${
+                  errors.name ? "border-red-500 focus-visible:ring-red-500" : ""
+                }`}
               />
+              {errors.name && (
+                <p className="text-sm text-red-500 mt-1">{errors.name}</p>
+              )}
             </div>
             <div>
               <Label htmlFor="username">Username</Label>
@@ -98,8 +146,15 @@ function RegisterPage() {
                 onChange={handleChange}
                 placeholder="johndoe123"
                 required
-                className="mt-1"
+                className={`mt-1 ${
+                  errors.username
+                    ? "border-red-500 focus-visible:ring-red-500"
+                    : ""
+                }`}
               />
+              {errors.username && (
+                <p className="text-sm text-red-500 mt-1">{errors.username}</p>
+              )}
             </div>
             <div>
               <Label htmlFor="email">Email</Label>
@@ -110,8 +165,15 @@ function RegisterPage() {
                 onChange={handleChange}
                 placeholder="john@example.com"
                 required
-                className="mt-1"
+                className={`mt-1 ${
+                  errors.email
+                    ? "border-red-500 focus-visible:ring-red-500"
+                    : ""
+                }`}
               />
+              {errors.email && (
+                <p className="text-sm text-red-500 mt-1">{errors.email}</p>
+              )}
             </div>
             <div>
               <Label htmlFor="password">Password</Label>
@@ -122,8 +184,15 @@ function RegisterPage() {
                 onChange={handleChange}
                 placeholder="••••••••"
                 required
-                className="mt-1"
+                className={`mt-1 ${
+                  errors.password
+                    ? "border-red-500 focus-visible:ring-red-500"
+                    : ""
+                }`}
               />
+              {errors.password && (
+                <p className="text-sm text-red-500 mt-1">{errors.password}</p>
+              )}
             </div>
             <div>
               <Label htmlFor="phone">Phone Number</Label>
@@ -134,8 +203,15 @@ function RegisterPage() {
                 onChange={handleChange}
                 placeholder="123-456-7890"
                 required
-                className="mt-1"
+                className={`mt-1 ${
+                  errors.phone
+                    ? "border-red-500 focus-visible:ring-red-500"
+                    : ""
+                }`}
               />
+              {errors.phone && (
+                <p className="text-sm text-red-500 mt-1">{errors.phone}</p>
+              )}
             </div>
             <div>
               <Label htmlFor="role">Role</Label>
