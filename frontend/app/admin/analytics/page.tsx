@@ -1,84 +1,76 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
 import { Bar, BarChart } from "recharts";
 
 import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
+import { useEffect } from "react";
+import axios from "axios";
 
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+const chartData = [
+  { month: "January", desktop: 186, mobile: 80 },
+  { month: "February", desktop: 305, mobile: 200 },
+  { month: "March", desktop: 237, mobile: 120 },
+  { month: "April", desktop: 73, mobile: 190 },
+  { month: "May", desktop: 209, mobile: 130 },
+  { month: "June", desktop: 214, mobile: 140 },
+];
 
-export default function DatePickerDemo() {
-  const [date, setDate] = useState<Date>();
+//fetch last 10 days sales and display in chart count of sales per day for desktop and mobile
+
+const chartConfig = {
+  desktop: {
+    label: "Desktop",
+    color: "#2563eb",
+  },
+  mobile: {
+    label: "Mobile",
+    color: "#60a5fa",
+  },
+} satisfies ChartConfig;
+
+export function ChartExample() {
   useEffect(() => {
-    console.log(date);
-    // function toLocalString() {
-    //   const dateFormat = Date(
-    //     "Thu May 14 2026 00:00:00 GMT+0300 (East Africa Time)",
-    //   );
-    //   const aa = dateFormat.toLocalDateString();
-    //   console.log(aa);
-    // }
-    // toLocalString();
-  }, [date]);
+    const fetchSalesData = async () => {
+      try {
+        await axios.get("http://localhost:8000/api/sales", {
+          headers: { Authorization: "Bearer dev_token" },
+        });
+      } catch (error) {
+        console.error("Failed to fetch sales data", error);
+      }
+    };
+    fetchSalesData();
+  }, []);
 
   return (
-    <Popover>
-      <PopoverTrigger
-        render={
-          <Button
-            variant="outline"
-            data-empty={!date}
-            className="justify-start text-left font-normal data-[empty=true]:text-muted-foreground"
-          />
-        }
-      >
-        <CalendarIcon />
-        {date ? format(date, "PPP") : <span>Pick a date</span>}
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-0">
-        <Calendar mode="single" selected={date} onSelect={setDate} />
-      </PopoverContent>
-    </Popover>
+    <ChartContainer config={chartConfig} className="min-h-50 w-full">
+      <BarChart accessibilityLayer data={chartData}>
+        <Bar dataKey="desktop" fill="var(--color-desktop)" radius={4} />
+        <Bar dataKey="mobile" fill="var(--color-mobile)" radius={4} />
+      </BarChart>
+    </ChartContainer>
   );
 }
 
-// ("use client");
-
-// const chartData = [
-//   { month: "January", desktop: 186, mobile: 80 },
-//   { month: "February", desktop: 305, mobile: 200 },
-//   { month: "March", desktop: 237, mobile: 120 },
-//   { month: "April", desktop: 73, mobile: 190 },
-//   { month: "May", desktop: 209, mobile: 130 },
-//   { month: "June", desktop: 214, mobile: 140 },
-// ];
-
-// const chartConfig = {
-//   desktop: {
-//     label: "Desktop",
-//     color: "#2563eb",
-//   },
-//   mobile: {
-//     label: "Mobile",
-//     color: "#60a5fa",
-//   },
-// } satisfies ChartConfig;
-
-// export function ChartExample() {
-//   return (
-//     <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
-//       <BarChart accessibilityLayer data={chartData}>
-//         <Bar dataKey="desktop" fill="var(--color-desktop)" radius={4} />
-//         <Bar dataKey="mobile" fill="var(--color-mobile)" radius={4} />
-//       </BarChart>
-//     </ChartContainer>
-//   );
-// }
+export default function AdminAnalyticsPage() {
+  return (
+    <main className="mx-auto max-w-7xl p-4">
+      <div className="rounded-3xl border border-border bg-slate-50 p-6 shadow-sm">
+        <div>
+          <p className="text-sm uppercase tracking-[0.3em] text-muted-foreground">
+            Analytics
+          </p>
+          <h1 className="text-3xl font-semibold tracking-tight">
+            Sales Insights
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Review your recent sales trends and traffic performance.
+          </p>
+        </div>
+      </div>
+      <section className="mt-6">
+        <ChartExample />
+      </section>
+    </main>
+  );
+}

@@ -11,6 +11,7 @@ import {
   Settings,
   User,
   Package,
+  ShoppingBasket,
 } from "lucide-react";
 import {
   Sidebar,
@@ -98,12 +99,7 @@ export function AdminSidebar() {
       <SidebarHeader className="border-b px-6 py-4">
         <div className="flex items-center gap-2">
           <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Image
-              src="/assets/images/Al-furqan_logo.jpg"
-              width={32}
-              height={32}
-              alt="Logo of al-furqan studio"
-            />
+            <ShoppingBasket />
           </div>
           <div className="flex flex-col">
             <span className="text-sm font-semibold">inventory</span>

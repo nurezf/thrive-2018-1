@@ -10,8 +10,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
+import { z } from "zod";
 import ProductAdd from "./productAdd";
 import ProductEdit from "./productEdit";
 import axios from "axios";
@@ -19,6 +31,7 @@ import { Download, FileText } from "lucide-react";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
+import { toast } from "sonner";
 
 export type Product = {
   product_id: string;
@@ -73,16 +86,49 @@ export default function ProductsPage() {
     fetchCategories().then((data) => setCategories(data));
   }, []);
 
+  function confirmation() {
+    return (
+      <AlertDialog>
+        <AlertDialogTrigger render={<Button variant="outline" />}>
+          Show Dialog
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete your
+              account from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction>Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    );
+  }
+
   const handleDelete = async (productId: string) => {
-    if (confirm("Are you sure you want to delete this product?")) {
-      try {
-        await axios.delete(`http://localhost:8000/api/product/${productId}`);
-        setProducts(products.filter((p) => p.product_id !== productId));
-        alert("Product deleted successfully");
-      } catch (error) {
-        console.error("Failed to delete product", error);
-        alert("Failed to delete product");
-      }
+    const deleteSchema = z.object({
+      productId: z.string().min(1, "Product ID is required"),
+    });
+
+    const parsed = deleteSchema.safeParse({ productId });
+    if (!parsed.success) {
+      toast.error("Unable to delete: invalid product ID.");
+      return;
+    }
+
+    try {
+      await axios.delete(
+        `http://localhost:8000/api/product/${parsed.data.productId}`,
+      );
+      setProducts(products.filter((p) => p.product_id !== productId));
+      toast.success("Product deleted successfully");
+    } catch (error) {
+      console.error("Failed to delete product", error);
+      toast.error("Failed to delete product");
     }
   };
 
@@ -211,13 +257,34 @@ export default function ProductsPage() {
               <TableCell>{product.sku}</TableCell>
               <TableCell className="flex items-center gap-2">
                 <ProductEdit product={product} />
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => handleDelete(product.product_id)}
-                >
-                  Delete
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger
+                    className="bg-red-600 text-amber-50"
+                    render={<Button />}
+                  >
+                    Delete
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        Are you absolutely sure?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently
+                        delete this product from your store.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        className="bg-red-600 text-amber-50"
+                        onClick={() => handleDelete(product.product_id)}
+                      >
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </TableCell>
             </TableRow>
           ))}

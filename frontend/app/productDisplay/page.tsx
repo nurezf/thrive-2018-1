@@ -2,7 +2,6 @@
 
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
@@ -16,6 +15,7 @@ import { ShoppingCart } from "lucide-react";
 import { useProductStore } from "../hooks/useProduct";
 import Link from "next/link";
 import { toast } from "sonner";
+import Image from "next/image";
 
 export default function ProductDisplay() {
   const {
@@ -26,10 +26,22 @@ export default function ProductDisplay() {
     handleAddToCart,
     setProduct,
     setLoading,
-    setError,
   } = useProductStore();
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+
+  const filteredProducts = product
+    ? product.filter((p: Product) => {
+        const matchesSearch =
+          p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (p.description &&
+            p.description.toLowerCase().includes(searchQuery.toLowerCase()));
+        const matchesCategory =
+          selectedCategory === "" || p.category === selectedCategory;
+        return matchesSearch && matchesCategory;
+      })
+    : [];
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -45,114 +57,145 @@ export default function ProductDisplay() {
       }
     };
     fetchProduct();
-  }, []);
+  }, [setProduct, setLoading]);
+
   return (
-    <main>
-      <header className="flex items-center justify-between gap-2 my-5">
-        <h2 className="text-2xl font-semibold">Products</h2>
-        {/* TODO: add search bar */}
-        <input
-          type="text"
-          placeholder="Search..."
-          className="border border-border rounded-md p-2"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-        {/* TODO: add category filter */}
-        <select name="" id="" className="border border-border rounded-md p-2">
-          <option value="">all</option>
-          <option value="">Electronics</option>
-          <option value="">Books</option>
-          <option value="">Clothing</option>
-          <option value="">Home & Kitchen</option>
-          <option value="">Sports & Fitness</option>
-          <option value="">Toys & Games</option>
-          <option value="">Beauty & Personal Care</option>
-          <option value="">Health & Household</option>
-          <option value="">Pet Supplies</option>
-          <option value="">Automotive</option>
-          <option value="">Tools & Home Improvement</option>
-          <option value="">Grocery & Gourmet Foods</option>
-        </select>
-        {/* TODO: cart icon */}
-        <Button className="relative">
-          <ShoppingCart />
-          <p className="absolute top-0 right-0 text-red-500">{cart.length}</p>
-        </Button>
-        <Button>
-          <Link href="/checkout">checkout</Link>
-        </Button>
-        <Button>
-          <Link href="/admin/dashboard">Admin Dashboard</Link>
-        </Button>
-      </header>
-      <section className="grid grid-cols-4 gap-4">
+    <main className="mx-auto max-w-7xl p-4">
+      <div className="mb-8 rounded-3xl border border-border bg-slate-50 p-6 shadow-sm">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm uppercase tracking-[0.3em] text-muted-foreground">
+              Shop
+            </p>
+            <h1 className="text-3xl font-semibold tracking-tight">Products</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Discover our collection of quality products.
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button variant="outline" className="relative">
+              <ShoppingCart className="size-4" />
+              <span className="absolute -top-2 -right-2 flex size-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">
+                {cart.length}
+              </span>
+            </Button>
+            <Button>
+              <Link href="/checkout">Checkout</Link>
+            </Button>
+            <Button variant="outline">
+              <Link href="/admin/dashboard">Admin Dashboard</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-1 items-center gap-3">
+          <div className="relative flex-1 max-w-sm">
+            <input
+              type="text"
+              placeholder="Search products..."
+              className="w-full rounded-full border border-border bg-background px-4 py-2 text-sm placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <select
+            className="rounded-full border border-border bg-background px-4 py-2 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20"
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+          >
+            <option value="">All Categories</option>
+            <option value="Electronics">Electronics</option>
+            <option value="Books">Books</option>
+            <option value="Clothing">Clothing</option>
+            <option value="Home & Kitchen">Home & Kitchen</option>
+            <option value="Sports & Fitness">Sports & Fitness</option>
+            <option value="Toys & Games">Toys & Games</option>
+            <option value="Beauty & Personal Care">
+              Beauty & Personal Care
+            </option>
+            <option value="Health & Household">Health & Household</option>
+            <option value="Pet Supplies">Pet Supplies</option>
+            <option value="Automotive">Automotive</option>
+            <option value="Tools & Home Improvement">
+              Tools & Home Improvement
+            </option>
+            <option value="Grocery & Gourmet Foods">
+              Grocery & Gourmet Foods
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {loading ? (
-          <p>Loading...</p>
+          <div className="col-span-full flex items-center justify-center py-12">
+            <p className="text-muted-foreground">Loading products...</p>
+          </div>
         ) : error ? (
-          <p>Error: {error}</p>
-        ) : product ? (
-          <>
-            {product
-              .filter(
-                (p: Product) =>
-                  p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                  (p.description &&
-                    p.description
-                      .toLowerCase()
-                      .includes(searchQuery.toLowerCase())),
-              )
-              .map((p: Product) => (
-                <Card
-                  key={p.product_id}
-                  className="overflow-hidden flex flex-col"
-                >
-                  {p.images && p.images.length > 0 && (
-                    <div className="w-full h-48 bg-muted relative">
-                      <img
-                        src={p.images[0].url}
-                        alt={p.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                  <CardHeader>
-                    <CardTitle>{p.name}</CardTitle>
-                    <CardDescription>{p.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="font-semibold text-lg">${p.price}</p>
-                      {p.original_price && (
-                        <p className="line-through text-muted-foreground text-sm">
-                          ${p.original_price}
-                        </p>
-                      )}
-                    </div>
-                    {p.discount_percentage && (
-                      <p className="text-green-600 font-medium text-sm">
-                        {p.discount_percentage}% OFF
-                      </p>
-                    )}
-                  </CardContent>
-                  <CardFooter>
-                    <CardAction>
-                      <Button
-                        onClick={() => {
-                          handleAddToCart(p);
-                          toast.success(`${p.name} added to cart!`);
-                        }}
-                        className="w-full bg-blue-500 text-blue-50"
-                      >
-                        Add to Cart
-                      </Button>
-                    </CardAction>
-                  </CardFooter>
-                </Card>
-              ))}
-          </>
+          <div className="col-span-full flex items-center justify-center py-12">
+            <p className="text-destructive">Error: {error}</p>
+          </div>
+        ) : filteredProducts.length === 0 ? (
+          <div className="col-span-full flex items-center justify-center py-12">
+            <p className="text-muted-foreground">No products found.</p>
+          </div>
         ) : (
-          <p>No products found</p>
+          filteredProducts.map((p: Product) => (
+            <Card
+              key={p.product_id}
+              className="group overflow-hidden border-border transition-all hover:shadow-lg"
+            >
+              {p.images && p.images.length > 0 ? (
+                <div className="aspect-square overflow-hidden bg-muted">
+                  <Image
+                    src={p.images[0]?.url}
+                    alt={p.name}
+                    width={400}
+                    height={400}
+                    className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                  />
+                </div>
+              ) : (
+                <div className="aspect-square bg-muted flex items-center justify-center">
+                  <p className="text-muted-foreground">No image</p>
+                </div>
+              )}
+              <CardHeader className="pb-3">
+                <CardTitle className="line-clamp-2 text-lg">{p.name}</CardTitle>
+                <CardDescription className="line-clamp-2">
+                  {p.description}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pb-3">
+                <div className="flex items-center gap-2">
+                  <p className="text-2xl font-bold">${p.price}</p>
+                  {p.original_price && (
+                    <p className="text-sm text-muted-foreground line-through">
+                      ${p.original_price}
+                    </p>
+                  )}
+                </div>
+                {p.discount_percentage && (
+                  <p className="mt-1 text-sm font-medium text-green-600">
+                    {p.discount_percentage}% OFF
+                  </p>
+                )}
+              </CardContent>
+              <CardFooter>
+                <Button
+                  onClick={() => {
+                    handleAddToCart(p);
+                    toast.success(`${p.name} added to cart!`);
+                  }}
+                  className="w-full"
+                >
+                  Add to Cart
+                </Button>
+              </CardFooter>
+            </Card>
+          ))
         )}
       </section>
     </main>

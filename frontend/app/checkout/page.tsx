@@ -272,6 +272,21 @@ export default function CheckoutPage() {
                     <span>Discount</span>
                     <span>{product.discount_percentage ?? 0}%</span>
                   </div>
+                  <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
+                    <span>VAT</span>
+                    <span>15%</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
+                    <span>total payable</span>
+                    <span>
+                      $
+                      {(Number(product.price) * quantity).toFixed(2) -
+                        ((Number(product.price) * quantity).toFixed(2) *
+                          product.discount_percentage) /
+                          100 +
+                        (Number(product.price) * quantity).toFixed(2) * 0.15}
+                    </span>
+                  </div>
                   <div className="flex justify-end">
                     <Button
                       variant="destructive"

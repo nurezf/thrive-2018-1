@@ -341,3 +341,28 @@ export const getSalesByDate = async (req, res) => {
     res.status(500).json({ error: "Internal server error", status: 500 });
   }
 };
+
+export const getRecentSales = async (req, res) => {
+  try {
+    const sales = await prisma.sales.findMany({
+      take: 10,
+      orderBy: {
+        created_at: "desc",
+      },
+      include: {
+        payment: true,
+        users: true,
+        sales_product_quantities: {
+          include: {
+            product: true,
+          },
+        },
+      },
+    });
+
+    res.status(200).json(sales);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Internal server error", status: 500 });
+  }
+};
