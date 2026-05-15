@@ -66,6 +66,21 @@ export default function CheckoutPage() {
     useProductStore.setState({ cart: newCart });
   }
 
+  function handleIncreaseQuantity(product: Product) {
+    useProductStore.setState((state) => ({ cart: [...state.cart, product] }));
+  }
+
+  function handleDecreaseQuantity(product: Product) {
+    const productIndex = cart.findIndex(
+      (item) => item.product_id === product.product_id,
+    );
+    if (productIndex === -1) return;
+
+    const newCart = [...cart];
+    newCart.splice(productIndex, 1);
+    useProductStore.setState({ cart: newCart });
+  }
+
   async function handleCheckout() {
     if (cart.length === 0) return;
 
@@ -257,7 +272,27 @@ export default function CheckoutPage() {
                     <CardDescription>{product.description}</CardDescription>
                   </div>
                   <div className="mt-4 flex items-center gap-3 text-sm text-muted-foreground md:mt-0">
-                    <span>Qty: {quantity}</span>
+                    <div className="flex items-center gap-2 rounded-full border border-border bg-white px-2 py-1">
+                      <button
+                        type="button"
+                        onClick={() => handleDecreaseQuantity(product)}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border text-sm"
+                        aria-label={`Decrease quantity for ${product.name}`}
+                      >
+                        −
+                      </button>
+                      <span className="min-w-8 text-center text-sm">
+                        {quantity}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleIncreaseQuantity(product)}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border text-sm"
+                        aria-label={`Increase quantity for ${product.name}`}
+                      >
+                        +
+                      </button>
+                    </div>
                     <span className="h-4 w-px bg-border" />
                     <span>Unit: ${Number(product.price).toFixed(2)}</span>
                   </div>

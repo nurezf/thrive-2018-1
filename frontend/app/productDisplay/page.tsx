@@ -100,7 +100,7 @@ export default function ProductDisplay() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <select
+          {/* <select
             className="rounded-full border border-border bg-background px-4 py-2 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20"
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
@@ -124,7 +124,7 @@ export default function ProductDisplay() {
             <option value="Grocery & Gourmet Foods">
               Grocery & Gourmet Foods
             </option>
-          </select>
+          </select> */}
         </div>
       </div>
 
